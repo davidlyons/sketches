@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="description" content="">
+		<meta name="author" content="">
+
+		<title>Lorax Tree</title>
+
+		<link href="../info.css" rel="stylesheet">
+		
+		<style>
+			* { box-sizing: border-box; }
+
+			html { overflow: hidden; }
+
+			body {
+				margin: 0;
+				padding: 0;
+				overflow: hidden;
+				font-family: Arial, sans-serif;
+				font-size: 13px;
+				line-height: 20px;
+				color: #333;
+				background: #c0dbe0;
+			}
+		</style>
+
+	</head>
+
+	<body>
+
+		<div id="container"></div>
+
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/build/three.js"></script>
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/controls/OrbitControls.js"></script>
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/Detector.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.0-0/dat.gui.min.js"></script>
+
+		<script src="../info.js"></script>
+
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var info = new Info(
+				'Lorax Tree',
+				['<a href="../">Codevember 2017</a>, Day 3',
+				 'Tube geo, skeleton, spring physics, and vertex displacement shader',
+				 'Created by <a href="http://davidscottlyons.com">David Lyons</a>'].join('<br>')
+			);
+
+			//
+
+			var TreeShader = {
+
+				uniforms: {
+					amplitude: { type: 'f', value: 0 }
+				},
+
+				vertexShader: [
+
+					"uniform float amplitude;",
+					"attribute float displacement;",
+					"varying vec3 vNormal;",
+
+					"void main() {",
+
+						"vNormal = normal;",
+
+						// multiply our displacement by the amplitude.
+						// The amp will get animated so we'll have animated displacement
+						"vec3 newPosition = position + normal * vec3(displacement * amplitude);",
+						"gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition,1.0);",
+					"}"
+
+				].join('\n'),
+
+				fragmentShader: [
+
+					"varying vec3 vNormal;",
+
+					"void main() {",
+
+						// calc the dot product and clamp
+						// 0 -> 1 rather than -1 -> 1
+						"vec3 light = vec3(0.5,0.2,1.0);",
+
+						// ensure it's normalized
+						"light = normalize(light);",
+
+						 // 0.3 is ambient shadow
+						"float dProd = max(0.4, dot(vNormal, light));",
+
+						// pink
+						"vec3 color = vec3( 255.0/255.0, 109.0/255.0, 233.0/255.0 );",
+
+						// feed into our frag colour
+						"gl_FragColor = vec4(color * dProd, 1.0);",
+						
+					"}",
+
+				].join('\n')
+
+			};
+
+			//
+
+			var gui = new dat.GUI();
+
+			var container = document.getElementById( 'container' );
+
+			var renderer = new THREE.WebGLRenderer( { antialias: true } );
+			renderer.setClearColor( 0xc0dbe0, 1 ); // blue
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			container.appendChild( renderer.domElement );
+
+			renderer.domElement.style.cursor = 'pointer';
+
+			var camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 100000 );
+			camera.position.set( 0, 5, 20 );
+
+			var controls = new THREE.OrbitControls( camera, renderer.domElement );
+			controls.target.y = 5;
+			controls.enabled = false;
+
+			var scene = new THREE.Scene();
+
+			// lights
+			var aLight = new THREE.AmbientLight( 0x888888 );
+			scene.add( aLight );
+
+			var dLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+			dLight.position.set( 0.5, 0.2, 1.0 ).normalize();
+			scene.add( dLight );
+
+			// ground
+			// helper = new THREE.GridHelper( 4, 10, 0x000000, 0x808080 );
+			// scene.add( helper );
+
+			// ------------------------------------------------------------
+
+			var treeGroup = new THREE.Group();
+			scene.add( treeGroup );
+
+			// ------------------------------------------------------------
+
+			// shadow
+
+			var shadowGeo = new THREE.CircleBufferGeometry( 1.2, 16 );
+
+			var shadowMat = new THREE.MeshBasicMaterial({ color: 0x8bb1b8 });
+			var shadowMesh = new THREE.Mesh( shadowGeo, shadowMat );
+			shadowMesh.rotation.x = - Math.PI / 2;
+			treeGroup.add( shadowMesh );
+
+			var shadowMat = new THREE.MeshBasicMaterial({ color: 0xa3c4ca });
+			var shadowMesh = new THREE.Mesh( shadowGeo, shadowMat );
+			shadowMesh.scale.setScalar( 1.5 );
+			shadowMesh.position.y = -0.01;
+			shadowMesh.rotation.x = - Math.PI / 2;
+			treeGroup.add( shadowMesh );
+
+			// ------------------------------------------------------------
+
+			// trunk tube geo
+
+			var spline = new THREE.CatmullRomCurve3([
+				new THREE.Vector3(  0,    0,  0  ),
+				new THREE.Vector3(  0,    2,  0  ),
+				new THREE.Vector3(  0.2,  4,  -.2  ),
+				new THREE.Vector3( -0.2,  6,  .2 ),
+				new THREE.Vector3(  0,    8,  0  ),
+				new THREE.Vector3(  0,   10,  0  )
+			]);
+			spline.curveType = 'catmullrom';
+
+			var trunkGeo = new THREE.TubeGeometry( spline, 20, 0.13, 8, false );
+			var trunkMat = new THREE.MeshLambertMaterial({
+				color: 0xceab56, // yellow
+				skinning: true
+			});
+			var trunkMesh = new THREE.SkinnedMesh( trunkGeo, trunkMat );
+
+			// skin weights
+
+			var segmentHeight = 2;
+
+			for ( var i = 0; i < trunkGeo.vertices.length; i ++ ) {
+
+				var vertex = trunkGeo.vertices[ i ];
+				var y = Math.max(vertex.y, 0.01); // without adding .1, the bottom edge loop is wonky?
+
+				var skinIndex = Math.floor( y / segmentHeight );
+				var skinWeight = ( y % segmentHeight ) / segmentHeight;
+
+				trunkGeo.skinIndices.push( new THREE.Vector4( skinIndex, skinIndex + 1, 0, 0 ) );
+				trunkGeo.skinWeights.push( new THREE.Vector4( 1 - skinWeight, skinWeight, 0, 0 ) );
+
+			}
+
+			// skeleton bones
+
+			bones = [];
+			var prevBone = new THREE.Bone();
+			bones.push( prevBone );
+
+			for ( var i = 1; i < spline.points.length; i++ ) {
+
+				var bone = new THREE.Bone();
+				bone.position.subVectors( spline.points[i], spline.points[i-1] );
+				bones.push( bone );
+				prevBone.add( bone );
+				prevBone = bone;
+
+			}
+
+			var skeleton = new THREE.Skeleton( bones );
+
+			trunkMesh.add( bones[ 0 ] );
+			trunkMesh.bind( skeleton );
+
+			trunkMesh.scale.multiplyScalar( 1 );
+			treeGroup.add( trunkMesh );
+
+			skeletonHelper = new THREE.SkeletonHelper( trunkMesh );
+			skeletonHelper.material.linewidth = 2;
+			scene.add( skeletonHelper );
+			skeletonHelper.visible = false;
+
+			gui.add(skeletonHelper, 'visible').name('skeleton visible');
+
+			//
+
+			var rotation = new THREE.Euler();
+
+			function updateRotation(){
+				for (var i = 0; i < bones.length; i++) {
+					bones[i].rotation.copy( rotation );
+				}
+			}
+
+			gui.add( rotation, 'x', -Math.PI / 4, Math.PI / 4 ).onChange( updateRotation );
+
+			// var wireframe = new THREE.WireframeGeometry( trunkGeo );
+			// var line = new THREE.LineSegments( wireframe );
+			// line.material.color.setHex( 0x000000 );
+			// line.material.transparent = true;
+			// line.material.opacity = 0.7;
+			// treeGroup.add( line );
+
+			// -----------------------------------------------------------------
+
+			// leaves
+
+			var leavesGeo = new THREE.SphereBufferGeometry( 1.2, 32, 32 );
+			leavesGeo.rotateY( -Math.PI / 2 ); // put the seam in the back
+
+			// var uniforms = THREE.UniformsUtils.merge([
+			// 	THREE.UniformsUtils.clone( TreeShader.uniforms ),
+			// 	THREE.UniformsLib[ "lights" ]
+			// ]);
+
+			var shaderMaterial = new THREE.ShaderMaterial({
+				uniforms:				THREE.UniformsUtils.clone( TreeShader.uniforms ),
+				vertexShader: 	TreeShader.vertexShader,
+				fragmentShader:	TreeShader.fragmentShader,
+				side: THREE.DoubleSide,
+				// lights: true
+			});
+
+			// populate the array of displacement attributes
+			var length = leavesGeo.attributes.position.count;
+			var displacement = new Float32Array( length );
+			for(var v = 0; v < length; v++) {
+				displacement[v] = Math.random() * 0.15;
+			}
+			leavesGeo.addAttribute( 'displacement', new THREE.BufferAttribute( displacement, 1 ) );
+
+			var leaves = new THREE.Mesh( leavesGeo, shaderMaterial );
+			bones[ bones.length-1 ].add( leaves );
+
+			var frame = 1;
+			shaderMaterial.uniforms.amplitude.value = Math.sin( frame ) + 3;
+
+			// -----------------------------------------------------------------
+
+			// spring physics
+
+			// https://burakkanber.com/blog/physics-in-javascript-car-suspension-part-1-spring-mass-damper/
+			// https://jsfiddle.net/bkanber/pDngH
+
+			var spring = {
+				stiffness: -20, // in kg / s^2
+				damping: -0.25, // in kg / s
+				length: 0.35, // THREE.Math.degToRad(20)
+			};
+
+			// Block position and velocity
+			var block = {
+				x: spring.length, // equilibrium
+				v: 0,
+				mass: 0.03
+			};
+
+			var frameRate  = 1/60;
+
+			var f1 = gui.addFolder('physics');
+			f1.add( spring, 'stiffness', -40, 0 );
+			f1.add( spring, 'damping', -0.5, 0 );
+			f1.add( block, 'mass', 0.005, 0.5 );
+			f1.open();
+
+			spring.reset = function() {
+				block.x = 0;
+			};
+
+			f1.add( spring, 'reset' );
+
+			function updateTree( x ) {
+				block.x = x + spring.length;
+				for ( var i = 0; i < bones.length; i++) {
+					bones[i].rotation.z = x;
+				}
+			}
+
+			function updatePhysics() {
+				var F_spring = spring.stiffness * ( block.x - spring.length );
+				var F_damper = spring.damping * block.v;
+
+				var a = ( F_spring + F_damper ) / block.mass;
+				block.v += a * frameRate;
+				block.x += block.v * frameRate;
+
+				// offset so it zeros out in the center
+				var x = block.x - spring.length;
+				updateTree( x );
+
+			}
+
+			// -----------------------------------------------------------------
+
+			// mouse events
+
+			var mouseOnDown = new THREE.Vector2();
+			var mouse = new THREE.Vector2();
+			mouse.isDown = false;
+			var diff = new THREE.Vector2();
+			var canvas = renderer.domElement;
+
+			function setNDC(m, e) { // normalized device coordinates
+				m.x = ( e.clientX / window.innerWidth ) * 2 - 1;
+				m.y = - ( e.clientY / window.innerHeight ) * 2 + 1;
+			}
+
+			function mousedown(e){
+				mouse.isDown = true;
+				setNDC( mouseOnDown, e );
+				renderer.domElement.style.cursor = 'move';
+				canvas.addEventListener('mousemove', mousemove, false);
+			}
+
+			function mousemove(e){
+				setNDC( mouse, e );
+				diff.subVectors( mouseOnDown, mouse );
+				var x = THREE.Math.clamp( diff.x, -0.5, 0.5 );
+				updateTree( x );
+			}
+
+			function mouseup(){
+				mouse.isDown = false;
+				renderer.domElement.style.cursor = 'pointer';
+				canvas.removeEventListener('mousemove', mousemove, false)
+			}
+
+			canvas.addEventListener('mousedown', mousedown, false);
+			canvas.addEventListener('mouseup', mouseup, false);
+
+			//
+
+			window.addEventListener( 'resize', resize, false );
+			function resize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+
+			loop();
+
+			function loop( time ) {
+				requestAnimationFrame( loop );
+				// TWEEN.update();
+
+				// frame += 0.05;
+				
+				// shaderMaterial.uniforms.amplitude.value = Math.sin( frame * 3 ) / 2 + 3.0;
+
+				// rotation.x = Math.cos( frame / 2 ) / 20;
+				// rotation.z = Math.sin( frame / 2 ) / 20;
+				// updateRotation();
+
+				if ( !mouse.isDown ) {
+					updatePhysics();
+				}
+
+				//
+
+				controls.update();
+				renderer.render( scene, camera );
+			}
+
+		</script>
+
+	</body>
+</html>

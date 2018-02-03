@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="description" content="">
+		<meta name="author" content="">
+
+		<title>Tree 2</title>
+
+		<link href="../info.css" rel="stylesheet">
+		
+		<style>
+			* { box-sizing: border-box; }
+
+			html { overflow: hidden; }
+
+			body {
+				margin: 0;
+				padding: 0;
+				overflow: hidden;
+				font-family: Arial, sans-serif;
+				font-size: 13px;
+				line-height: 20px;
+				color: #333;
+				background: #c0dbe0;
+			}
+		</style>
+
+	</head>
+
+	<body>
+
+		<div id="container"></div>
+
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/build/three.js"></script>
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/controls/OrbitControls.js"></script>
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/Detector.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.0-0/dat.gui.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.1.1/Tween.min.js"></script>
+
+		<script src="../info.js"></script>
+
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var info = new Info(
+				'Tree',
+				['Created by <a href="http://davidscottlyons.com"">David Lyons</a>'].join('<br>')
+			);
+
+			//
+
+			var TreeShader = {
+
+				uniforms: {
+					amplitude: { type: 'f', value: 1.0 },
+					// color:     { value: new THREE.Color( 0xff2200 ) },
+					color:     { value: new THREE.Color( 0x00ff00 ) },
+					texture:   { value: new THREE.TextureLoader().load( "water.jpg" ) }
+				},
+
+				vertexShader: [
+
+					"uniform float amplitude;",
+					"attribute float displacement;",
+					"varying vec3 vNormal;",
+					"varying vec2 vUv;",
+					"void main() {",
+					"	vNormal = normal;",
+					"	vUv = ( 0.5 + amplitude ) * uv + vec2( amplitude );",
+					"	vec3 newPosition = position + amplitude * normal * vec3( displacement );",
+					"	gl_Position = projectionMatrix * modelViewMatrix * vec4( newPosition, 1.0 );",
+					"}"
+
+				].join('\n'),
+
+				fragmentShader: [
+
+					"varying vec3 vNormal;",
+					"varying vec2 vUv;",
+					"uniform vec3 color;",
+					"uniform sampler2D texture;",
+					"void main() {",
+						"vec3 light = vec3( 0.5, 0.2, 1.0 );",
+						"light = normalize( light );",
+						"float dProd = dot( vNormal, light ) * 0.5 + 0.5;",
+						"vec4 tcolor = texture2D( texture, vUv );",
+						"vec4 gray = vec4( vec3( tcolor.r * 0.3 + tcolor.g * 0.59 + tcolor.b * 0.11 ), 1.0 );",
+						"gl_FragColor = gray * vec4( vec3( dProd ) * vec3( color ), 1.0 );",
+					"}",
+
+				].join('\n')
+
+			};
+
+			TreeShader.uniforms.texture.value.wrapS =
+			TreeShader.uniforms.texture.value.wrapT = THREE.RepeatWrapping;
+
+			//
+
+			// var gui = new dat.GUI();
+
+			var container = document.getElementById( 'container' );
+
+			var renderer = new THREE.WebGLRenderer( { antialias: true } );
+			renderer.setClearColor( 0xBBBBBB, 1 );
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			container.appendChild( renderer.domElement );
+
+			var camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 100000 );
+			camera.position.set( 0, 0, 5 );
+
+			var controls = new THREE.OrbitControls( camera, renderer.domElement );
+			// controls.target.y = 50;
+
+			var scene = new THREE.Scene();
+
+			// lights
+			var aLight = new THREE.AmbientLight( 0x404040 );
+			scene.add( aLight );
+
+			var dLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+			dLight.position.set( 0, 1, 1 );
+			scene.add( dLight );
+
+			// ground
+			helper = new THREE.GridHelper( 2, 10, 0x000000, 0x808080 );
+			scene.add( helper );
+
+			//
+
+			var shaderMaterial = new THREE.ShaderMaterial( {
+				// uniforms: THREE.UniformsUtils.clone( TreeShader.uniforms ),
+				uniforms: TreeShader.uniforms,
+				vertexShader: TreeShader.vertexShader,
+				fragmentShader: TreeShader.fragmentShader,
+				side: THREE.DoubleSide
+			});
+
+			var radius = 1, segments = 128, rings = 64;
+			// var geometry = new THREE.IcosahedronBufferGeometry(radius, 5);
+			var geometry = new THREE.SphereBufferGeometry( radius, segments, rings );
+			var displacement = new Float32Array( geometry.attributes.position.count );
+			var noise = new Float32Array( geometry.attributes.position.count );
+			for ( var i = 0; i < displacement.length; i ++ ) {
+				noise[ i ] = Math.random() * 5;
+			}
+			geometry.addAttribute( 'displacement', new THREE.BufferAttribute( displacement, 1 ) );
+			var sphere = new THREE.Mesh( geometry, shaderMaterial );
+			scene.add( sphere );
+
+			sphere.rotation.y = Math.PI/12;
+
+			var frame = 0.5;
+
+			//
+
+			window.addEventListener( 'resize', resize, false );
+
+			function resize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+
+			loop();
+
+			function loop() {
+				requestAnimationFrame( loop );
+				// TWEEN.update();
+
+
+				var time = Date.now() * 0.01;
+				
+				// frame += 0.01;
+				shaderMaterial.uniforms.amplitude.value = 0.2 * Math.sin( frame );
+
+				for ( var i = 0; i < displacement.length; i ++ ) {
+					displacement[ i ] = Math.sin( 0.1 * i + time );
+
+					noise[ i ] += 0.5 * ( 0.5 - Math.random() );
+					noise[ i ] = THREE.Math.clamp( noise[ i ], -5, 5 );
+					displacement[ i ] += noise[ i ];
+				}
+
+				controls.update();
+				renderer.render( scene, camera );
+			}
+
+			function tweenProp( obj, prop, targetValue ) {
+				var target = {};
+				target[prop] = targetValue;
+
+				var tween = new TWEEN.Tween( obj )
+					.to( target, 800 )
+					.easing( TWEEN.Easing.Elastic.Out )
+					.yoyo( true )
+					.delay( 800 )
+					.repeat( Infinity )
+					.start();
+			}
+
+		</script>
+
+	</body>
+</html>

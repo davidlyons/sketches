@@ -1,0 +1,53 @@
+/* info bottom left */
+
+#info {
+	text-align: left;
+	color: #fff;
+	position: absolute;
+	width: 240px;
+	padding: 15px;
+	background: rgba(0,0,0,0.2);
+	bottom: 50px;
+	left: 10px;
+	display: none;
+}
+
+#info.visible {
+	display: block;
+}
+
+#info h1 {
+	margin: 0 0 10px;
+	font-size: 20px;
+	font-weight: 700;
+}
+
+#info a {
+	color: #fc0;
+}
+
+#info a:hover,
+#info a:focus {
+	color: #fc0;
+	text-decoration: underline;
+}
+
+#info-icon {
+	position: absolute;
+	left: 10px;
+	bottom: 10px;
+	background: rgba(0,0,0,0.3);
+	width: 30px;
+	height: 30px;
+	font-weight: bold;
+	text-align: center;
+	line-height: 30px;
+	color: #fff;
+	font-family: monospace;
+	font-size: 16px;
+}
+
+#info-icon:hover {
+	cursor: pointer;
+	background: rgba(0,0,0,0.4);
+}
