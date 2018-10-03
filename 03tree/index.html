@@ -34,9 +34,9 @@
 
 		<div id="container"></div>
 
-		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/build/three.js"></script>
-		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/controls/OrbitControls.js"></script>
-		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/Detector.js"></script>
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r96/build/three.js"></script>
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r96/examples/js/controls/OrbitControls.js"></script>
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r96/examples/js/Detector.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.0-0/dat.gui.min.js"></script>
 
 		<script src="../info.js"></script>
@@ -57,7 +57,8 @@
 			var TreeShader = {
 
 				uniforms: {
-					amplitude: { type: 'f', value: 0 }
+					amplitude: { type: 'f', value: 0 },
+					diffuse: { type: 'c', value: new THREE.Color(0xff6de9) },
 				},
 
 				vertexShader: [
@@ -65,44 +66,23 @@
 					"uniform float amplitude;",
 					"attribute float displacement;",
 					"varying vec3 vNormal;",
+					"varying vec3 vViewPosition;",
 
 					"void main() {",
-
-						"vNormal = normal;",
 
 						// multiply our displacement by the amplitude.
 						// The amp will get animated so we'll have animated displacement
 						"vec3 newPosition = position + normal * vec3(displacement * amplitude);",
-						"gl_Position = projectionMatrix * modelViewMatrix * vec4(newPosition,1.0);",
+
+						"vec4 modelViewPosition = modelViewMatrix * vec4(newPosition,1.0);",
+						"vViewPosition = -modelViewPosition.xyz;",
+
+						"gl_Position = projectionMatrix * modelViewPosition;",
+
+						"vNormal = normalMatrix * normal;",
 					"}"
 
 				].join('\n'),
-
-				fragmentShader: [
-
-					"varying vec3 vNormal;",
-
-					"void main() {",
-
-						// calc the dot product and clamp
-						// 0 -> 1 rather than -1 -> 1
-						"vec3 light = vec3(0.5,0.2,1.0);",
-
-						// ensure it's normalized
-						"light = normalize(light);",
-
-						 // 0.3 is ambient shadow
-						"float dProd = max(0.4, dot(vNormal, light));",
-
-						// pink
-						"vec3 color = vec3( 255.0/255.0, 109.0/255.0, 233.0/255.0 );",
-
-						// feed into our frag colour
-						"gl_FragColor = vec4(color * dProd, 1.0);",
-						
-					"}",
-
-				].join('\n')
 
 			};
 
@@ -130,12 +110,15 @@
 			var scene = new THREE.Scene();
 
 			// lights
-			var aLight = new THREE.AmbientLight( 0x888888 );
+			var aLight = new THREE.AmbientLight( 0x777777 );
 			scene.add( aLight );
 
 			var dLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
-			dLight.position.set( 0.5, 0.2, 1.0 ).normalize();
+			dLight.position.set( 7, 5, 9 );
 			scene.add( dLight );
+
+			// var dlh = new THREE.DirectionalLightHelper( dLight );
+			// scene.add( dlh );
 
 			// ground
 			// helper = new THREE.GridHelper( 4, 10, 0x000000, 0x808080 );
@@ -259,17 +242,18 @@
 			var leavesGeo = new THREE.SphereBufferGeometry( 1.2, 32, 32 );
 			leavesGeo.rotateY( -Math.PI / 2 ); // put the seam in the back
 
-			// var uniforms = THREE.UniformsUtils.merge([
-			// 	THREE.UniformsUtils.clone( TreeShader.uniforms ),
-			// 	THREE.UniformsLib[ "lights" ]
-			// ]);
+			var phongShader = THREE.ShaderLib.phong;
+			// console.log( phongShader.uniforms );
 
 			var shaderMaterial = new THREE.ShaderMaterial({
-				uniforms:				THREE.UniformsUtils.clone( TreeShader.uniforms ),
+				uniforms: THREE.UniformsUtils.merge([
+					phongShader.uniforms,
+					TreeShader.uniforms
+				]),
 				vertexShader: 	TreeShader.vertexShader,
-				fragmentShader:	TreeShader.fragmentShader,
+				fragmentShader:	phongShader.fragmentShader,
 				side: THREE.DoubleSide,
-				// lights: true
+				lights: true
 			});
 
 			// populate the array of displacement attributes
