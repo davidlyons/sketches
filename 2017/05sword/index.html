@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="description" content="">
+		<meta name="author" content="">
+
+		<title>Sword</title>
+
+		<link href="../../info.css" rel="stylesheet">
+
+		<style>
+			html { overflow: hidden; }
+
+			body {
+				margin: 0;
+				padding: 0;
+				overflow: hidden;
+				font-family: Arial, sans-serif;
+				font-size: 13px;
+				line-height: 20px;
+				color: #333;
+				background: #feab4f;
+			}
+		</style>
+
+	</head>
+
+	<body>
+
+		<div id="container"></div>
+
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/build/three.js"></script>
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/controls/OrbitControls.js"></script>
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/Detector.js"></script>
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/loaders/FBXLoader.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.1.1/Tween.min.js"></script>
+
+		<script src="../../info.js"></script>
+
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var info = new Info(
+				'Sword',
+				['Codevember 2017, Day 5',
+				 'Created by <a href="http://davidscottlyons.com">David Lyons</a>'].join('<br>')
+			);
+
+			// --------------------------------------------------------------------
+
+			var container = document.getElementById( 'container' );
+
+			var renderer = new THREE.WebGLRenderer({ antialias: true });
+			renderer.setClearColor( 0xfeab4f, 1 );
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			container.appendChild( renderer.domElement );
+
+			renderer.domElement.style.cursor = 'pointer';
+
+			var camera = new THREE.PerspectiveCamera( 90, window.innerWidth / window.innerHeight, 0.1, 100000 );
+			// camera.position.set( 0, 5, 10 );
+			camera.position.set( 3.8, 3.9, 8.6 );
+
+			var controls = new THREE.OrbitControls( camera, renderer.domElement );
+			// controls.target.y = 5;
+			controls.target.set( -2.3, 4.6, -1.4 );
+
+			var scene = new THREE.Scene();
+
+			// lights
+			var aLight = new THREE.AmbientLight( 0x888888 );
+			scene.add( aLight );
+
+			var dLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+			dLight.position.set( 0.5, 0.2, 1.0 ).normalize();
+			scene.add( dLight );
+
+			// helper = new THREE.GridHelper( 4, 10, 0x000000, 0x808080 );
+			// scene.add( helper );
+
+			// -----------------------------------------------------------------
+
+			var swordGroup = new THREE.Group();
+			scene.add( swordGroup );
+			
+			var sword = new THREE.Group();
+			swordGroup.add( sword );
+
+			var fbxLoader = new THREE.FBXLoader();
+
+			// var root = 'https://cdn.rawgit.com/davidlyons/codevember17/v1/05sword/';
+			fbxLoader.load('model/sword.fbx', function(fbx) {
+				var mesh = fbx.children[0];
+
+				mesh.material = new THREE.MeshPhongMaterial({
+					vertexColors: THREE.VertexColors
+				});
+
+				sword.add( mesh );
+			});
+
+			// -----------------------------------------------------------------
+
+			var isTweening = false;
+
+			var moves = {
+				chop: function() {
+
+					var windUp = new TWEEN.Tween( swordGroup.rotation )
+						.to( { z: - Math.PI / 4 }, 100 )
+						.easing( TWEEN.Easing.Cubic.Out )
+						.onComplete(function(){
+
+							var chop = new TWEEN.Tween( swordGroup.rotation )
+								.to( { z: Math.PI / 2 }, 100 )
+								.easing( TWEEN.Easing.Cubic.In )
+								.onComplete(function(){
+
+									var reset = new TWEEN.Tween( swordGroup.rotation )
+										.to( { z: 0 }, 400 )
+										.delay( 100 )
+										.easing( TWEEN.Easing.Exponential.InOut )
+										.onComplete(function(){
+											isTweening = false;
+											renderer.domElement.style.cursor = 'pointer';
+										})
+										.start();
+
+								})
+								.start();
+
+						})
+						.start();
+
+				},
+				poke: function() {
+
+					var windUpP = new TWEEN.Tween( swordGroup.position )
+						.to( { x: 2, y: -2 }, 100 )
+						.easing( TWEEN.Easing.Cubic.Out )
+						.start();
+
+					var windUpR = new TWEEN.Tween( swordGroup.rotation )
+						.to( { z: Math.PI / 4 }, 100 )
+						.easing( TWEEN.Easing.Cubic.Out )
+						.onComplete(function(){
+
+							var pokeGP = new TWEEN.Tween( swordGroup.position )
+								.to( { x: 0, y: 0 }, 100 )
+								.easing( TWEEN.Easing.Back.In )
+								.start();
+
+							var poke = new TWEEN.Tween( sword.position )
+								.to( { y: 4 }, 100 )
+								.easing( TWEEN.Easing.Exponential.InOut )
+								.onComplete(function(){
+
+									var pokeReturn = new TWEEN.Tween( sword.position )
+										.to( { y: 0 }, 100 )
+										.easing( TWEEN.Easing.Exponential.InOut )
+										.onComplete(function(){
+
+											var resetR = new TWEEN.Tween( swordGroup.rotation )
+												.to( { z: 0 }, 400 )
+												// .delay( 200 )
+												.easing( TWEEN.Easing.Exponential.InOut )
+												.onComplete(function(){
+													isTweening = false;
+													renderer.domElement.style.cursor = 'pointer';
+												})
+												.start();
+
+										})
+										.start();
+
+								})
+								.start();
+
+						})
+						.start();
+
+				},
+				slam: function() {
+
+					var windUpR = new TWEEN.Tween( swordGroup.rotation )
+						.to( { z: - Math.PI / 4 / 3 }, 190 )
+						.easing( TWEEN.Easing.Cubic.Out )
+						.start();
+
+					var windUpP = new TWEEN.Tween( swordGroup.position )
+						.to( { x: -1, y: 5 }, 200 )
+						.easing( TWEEN.Easing.Cubic.Out )
+						.onComplete(function(){
+
+							var chopR = new TWEEN.Tween( swordGroup.rotation )
+								.to( { z: Math.PI / 2 }, 90 )
+								.easing( TWEEN.Easing.Cubic.In )
+								.start();
+
+							var chopP = new TWEEN.Tween( swordGroup.position )
+								.to( { x: -2, y: 0 }, 100 )
+								.easing( TWEEN.Easing.Cubic.In )
+								.onComplete(function(){
+
+									var resetP = new TWEEN.Tween( swordGroup.position )
+										.to( { x: -1, y: 2 }, 200 )
+										.delay( 100 )
+										.easing( TWEEN.Easing.Cubic.In )
+										.onComplete(function(){
+
+											var resetP2 = new TWEEN.Tween( swordGroup.position )
+												.to( { x: 0, y: 0 }, 190 )
+												.easing( TWEEN.Easing.Cubic.Out )
+												.start();
+
+										})
+										.start();
+
+									var resetR = new TWEEN.Tween( swordGroup.rotation )
+										.to( { z: 0 }, 400 )
+										.delay( 100 )
+										.easing( TWEEN.Easing.Cubic.InOut )
+										.onComplete(function(){
+											isTweening = false;
+											renderer.domElement.style.cursor = 'pointer';
+										})
+										.start();
+
+								})
+								.start();
+
+						})
+						.start();
+
+				},
+				spin: function() {
+
+					var swing = new TWEEN.Tween( swordGroup.rotation )
+						.to( { z: Math.PI / 2 + Math.PI * 2 }, 300 )
+						.easing( TWEEN.Easing.Back.In )
+						.onComplete(function(){
+
+							swordGroup.rotation.z = Math.PI / 2;
+
+							var reset = new TWEEN.Tween( swordGroup.rotation )
+								.to( { z: 0 }, 300 )
+								.delay( 100 )
+								.easing( TWEEN.Easing.Exponential.InOut )
+								.onComplete(function(){
+									isTweening = false;
+									renderer.domElement.style.cursor = 'pointer';
+								})
+								.start();
+
+						})
+						.start();
+
+				}
+			};
+
+			var list = [];
+			for (var name in moves) {
+				list.push( name );
+			}
+
+			var i = 0;
+
+			function mousedown(e){
+
+				if ( !isTweening ) {
+
+					isTweening = true;
+					renderer.domElement.style.cursor = 'default';
+
+					// cycle
+					moves[ list[i++] ]();
+					if ( i >= list.length ) i = 0;
+
+				}
+
+			}
+
+			renderer.domElement.addEventListener('mousedown', mousedown, false);
+
+			//
+
+			window.addEventListener( 'resize', resize, false );
+			function resize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+
+			loop();
+
+			function loop() {
+				requestAnimationFrame( loop );
+
+				TWEEN.update();
+
+				controls.update();
+				renderer.render( scene, camera );
+			}
+
+		</script>
+
+	</body>
+</html>

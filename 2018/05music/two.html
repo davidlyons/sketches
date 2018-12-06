@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Two.js</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+	<style>
+		body {
+			background: rgb(0, 191, 168);
+		}
+	</style>
+
+</head>
+<body>
+
+	<div id="container"></div>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/two.js/0.6.0/two.min.js"></script>
+
+	<script>
+
+		var container = document.getElementById( 'container' );
+
+		var two = new Two({
+			type: Two.Types['svg'],
+			fullscreen: true,
+			autostart: true
+		}).appendTo( container );
+
+		var points = [
+			new Two.Anchor(0, 0),
+			new Two.Anchor(100, -100),
+			new Two.Anchor(300, 100)
+		];
+
+		// var path = two.makeCurve( points, true );
+		var path = two.makePath( points, true );
+
+		// var path = new Two.Path( points, false, false );
+		// two.add( path );
+
+		path.noFill().linewidth = 25;
+		path.cap = path.join = 'round';
+		path.stroke = 'white';
+
+		two.bind('resize', resize);
+		function resize(){
+			two.scene.translation.set( two.width / 2, two.height / 2 );
+		}
+		resize();
+
+		two.bind('update', function() {
+
+		});
+
+	</script>
+
+</body>
+</html>

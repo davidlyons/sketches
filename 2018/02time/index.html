@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="description" content="">
+		<meta name="author" content="">
+
+		<title>Time</title>
+
+		<link href="../../info.css" rel="stylesheet">
+
+		<style>
+			* { box-sizing: border-box; }
+
+			html { overflow: hidden; }
+
+			body {
+				margin: 0;
+				padding: 0;
+				overflow: hidden;
+				font-family: Arial, sans-serif;
+				font-size: 13px;
+				line-height: 20px;
+				color: #333;
+				background: #bbb;
+			}
+
+			#webglmessage {
+				position: absolute;
+				top: 0;
+				left: 50%;
+				margin-left: -200px !important;
+			}
+		</style>
+
+	</head>
+
+	<body>
+
+		<div id="container"></div>
+
+		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/build/three.js"></script>
+		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/examples/js/controls/OrbitControls.js"></script>
+		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/examples/js/WebGL.js"></script>
+
+		<script src="../../info.js"></script>
+
+		<script>
+
+			// references: google and pinterest: minimal analogue clock
+
+			if ( WEBGL.isWebGLAvailable() === false ) {
+				document.body.appendChild( WEBGL.getWebGLErrorMessage() );
+			}
+
+			var info = new Info(
+				'Time',
+				[
+					'Codevember 2018, Day 2',
+					'Created by <a href="http://davidscottlyons.com" target="_blank">David Lyons</a>'
+				].join('<br>')
+			);
+
+			var container = document.getElementById( 'container' );
+
+			var renderer = new THREE.WebGLRenderer( { antialias: true } );
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			container.appendChild( renderer.domElement );
+
+			var camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, .1, 1000 );
+			camera.position.set( 0, 0, 4 );
+
+			// var controls = new THREE.OrbitControls( camera, renderer.domElement );
+			// controls.screenSpacePanning = true;
+
+			var scene = new THREE.Scene();
+			scene.background = new THREE.Color( 0x333333 );
+
+			// lights
+			var aLight = new THREE.AmbientLight( 0xaaaaaa );
+			scene.add( aLight );
+
+			var dLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+			dLight.position.set( 1, 0.2, 0.7 ).multiplyScalar( 2 );
+			scene.add( dLight );
+
+			// var dlh = new THREE.DirectionalLightHelper( dLight, 0.5, 0x333333 );
+			// scene.add( dlh );
+
+			// ---------------------------------------------------------------
+
+			var wallGeo = new THREE.PlaneBufferGeometry( 25, 25 );
+			var wallMat = new THREE.MeshPhongMaterial({ color: 0xeeeeee });
+			var wall = new THREE.Mesh( wallGeo, wallMat );
+			scene.add( wall );
+
+			// ---------------------------------------------------------------
+
+			var clockGroup = new THREE.Group();
+			scene.add( clockGroup );
+
+			// face
+
+			var faceGeo = new THREE.CircleBufferGeometry( 1, 32 );
+			var faceMat = new THREE.MeshPhongMaterial({ color: 0x006cff });
+			var face = new THREE.Mesh( faceGeo, faceMat );
+			face.position.z = 0.3;
+			clockGroup.add( face );
+
+			// border
+
+			var circle = new THREE.Shape();
+			circle.absarc( 0, 0, 1.08, 0, Math.PI * 2 );
+
+			var hole = new THREE.Path();
+			hole.absarc( 0, 0, 1, 0, Math.PI * 2 );
+			circle.holes.push( hole );
+
+			var tubeExtrudeSettings = {
+				curveSegments: 20,
+				depth: .4,
+				steps: 1,
+				bevelEnabled: false
+			};
+			var tubeGeo = new THREE.ExtrudeGeometry( circle, tubeExtrudeSettings );
+			var tubeMat = new THREE.MeshPhongMaterial({ color: 0xdddddd });
+			var border = new THREE.Mesh( tubeGeo, tubeMat );
+			clockGroup.add( border );
+
+			var center = new THREE.Vector3();
+
+			var handMat = new THREE.MeshPhongMaterial({ color: 0xcccccc });
+
+			// hour ticks
+
+			var hourTickGeo = new THREE.BoxBufferGeometry( .02, .02, .1 );
+			hourTickGeo.translate( 0, 0, .05 );
+
+			for ( var i = 0; i < 12; i ++ ) {
+				var tickMark = new THREE.Mesh( hourTickGeo, handMat );
+				var angle = i / 12 * 2 * Math.PI;
+				tickMark.position.x = Math.cos( angle ) * 0.9;
+				tickMark.position.y = Math.sin( angle ) * 0.9;
+				tickMark.lookAt( center );
+				face.add( tickMark );
+			}
+
+			// minute ticks
+
+			var minuteTickGeo = new THREE.BoxBufferGeometry( .02, .01, .04 );
+			minuteTickGeo.translate( 0, 0, .02 );
+
+			for ( var i = 0; i < 60; i ++ ) {
+				var tickMark = new THREE.Mesh( minuteTickGeo, handMat );
+				var angle = i / 60 * 2 * Math.PI;
+				tickMark.position.x = Math.cos( angle ) * 0.9;
+				tickMark.position.y = Math.sin( angle ) * 0.9;
+				tickMark.lookAt( center );
+				face.add( tickMark );
+			}
+
+			// hands
+
+			var handGroup = new THREE.Group();
+			handGroup.position.z = 0.04;
+			face.add( handGroup );
+
+			var handCenterGeo = new THREE.CylinderBufferGeometry( .03, .03, .1, 32 );
+			handCenterGeo.rotateX( Math.PI / 2 );
+			var handCenter = new THREE.Mesh( handCenterGeo, handMat );
+			handGroup.add( handCenter );
+
+			var handGeo = new THREE.BoxBufferGeometry( .04, .04, .04 );
+			handGeo.translate( 0, 0.02, 0.02 );
+
+			// hour
+
+			var handHour = new THREE.Mesh( handGeo, handMat );
+			handHour.scale.y = 12;
+			handGroup.add( handHour );
+
+			// minute
+
+			var handMinute = handHour.clone();
+			handMinute.scale.y = 20;
+			handGroup.add( handMinute );
+
+			// second
+
+			var handSecond = handHour.clone();
+			handSecond.scale.set( 0.5, 21, 0.5 );
+			handGroup.add( handSecond );
+
+			// ---------------------------------------------------------------
+
+			function updateTime(){
+				var now = new Date();
+				var hour = now.getHours();
+				var minute = now.getMinutes();
+				var second = now.getSeconds();
+
+				// hour
+				hour = hour % 12;
+				hour = ( hour * Math.PI / 6 ) +
+							 ( minute * Math.PI / ( 6 * 60 ) ) +
+							 ( second * Math.PI / ( 360 * 60 ) );
+				handHour.rotation.z = - hour;
+
+				// minute
+				minute = ( minute * Math.PI / 30 ) + ( second * Math.PI / ( 30 * 60 ) );
+				handMinute.rotation.z = - minute;
+
+				// second
+				second = ( second * Math.PI / 30 );
+				handSecond.rotation.z = - second;
+			}
+
+			updateTime();
+
+			setInterval( updateTime, 1000 );
+
+			// ---------------------------------------------------------------
+
+			// shadows
+
+			renderer.shadowMap.enabled = true;
+			renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+			dLight.castShadow = true;
+			dLight.shadow.mapSize.width = 2048;
+			dLight.shadow.mapSize.height = 2048;
+			dLight.shadow.radius = 3;
+
+			wall.receiveShadow = true;
+			face.receiveShadow = true;
+
+			border.castShadow = true;
+			handCenter.castShadow = true;
+			handHour.castShadow = true;
+			handMinute.castShadow = true;
+			handSecond.castShadow = true;
+
+			// ---------------------------------------------------------------
+
+			window.addEventListener( 'resize', resize, false );
+			function resize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+
+			renderer.setAnimationLoop( loop );
+
+			function loop() {
+
+				// controls.update();
+
+				renderer.render( scene, camera );
+			}
+
+		</script>
+
+	</body>
+</html>

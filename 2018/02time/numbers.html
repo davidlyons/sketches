@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="description" content="">
+		<meta name="author" content="">
+
+		<title>Time</title>
+
+		<link href="../../info.css" rel="stylesheet">
+
+		<style>
+			* { box-sizing: border-box; }
+
+			html { overflow: hidden; }
+
+			body {
+				margin: 0;
+				padding: 0;
+				overflow: hidden;
+				font-family: Arial, sans-serif;
+				font-size: 13px;
+				line-height: 20px;
+				color: #333;
+				background: #bbb;
+			}
+
+			#webglmessage {
+				position: absolute;
+				top: 0;
+				left: 50%;
+				margin-left: -200px !important;
+			}
+		</style>
+
+	</head>
+
+	<body>
+
+		<div id="container"></div>
+
+		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/build/three.js"></script>
+		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/examples/js/controls/OrbitControls.js"></script>
+		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/examples/js/WebGL.js"></script>
+		<!-- <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/examples/js/loaders/FBXLoader.js"></script> -->
+		<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.3/dat.gui.min.js"></script> -->
+		<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.2.0/Tween.min.js"></script> -->
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+
+		<script src="https://cdn.jsdelivr.net/gh/davidlyons/text-sdf-bitmap/three-bmfont-text-bundle.js"></script>
+		<script src="https://cdn.jsdelivr.net/gh/davidlyons/text-sdf-bitmap/sdf-shader.js"></script>
+		<script src="https://cdn.jsdelivr.net/gh/davidlyons/text-sdf-bitmap/text-bitmap.js"></script>
+
+		<script src="../../info.js"></script>
+
+		<script>
+
+			// references: google and pinterest: minimal analogue clock
+
+			if ( WEBGL.isWebGLAvailable() === false ) {
+				document.body.appendChild( WEBGL.getWebGLErrorMessage() );
+			}
+
+			var info = new Info(
+				'Time',
+				[
+					'Codevember 2018, Day 2',
+					'Created by <a href="http://davidscottlyons.com" target="_blank">David Lyons</a>'
+				].join('<br>')
+			);
+
+			var container = document.getElementById( 'container' );
+
+			var renderer = new THREE.WebGLRenderer( { antialias: true } );
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			container.appendChild( renderer.domElement );
+
+			var camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, .1, 1000 );
+			camera.position.set( 0, 0, 4 );
+
+			var controls = new THREE.OrbitControls( camera, renderer.domElement );
+			controls.screenSpacePanning = true;
+
+			var scene = new THREE.Scene();
+			scene.background = new THREE.Color( 0x333333 );
+
+			// lights
+			var aLight = new THREE.AmbientLight( 0xaaaaaa );
+			scene.add( aLight );
+
+			var dLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+			dLight.position.set( 1, 0.2, 0.6 ).multiplyScalar( 2 );
+			scene.add( dLight );
+
+			var dlh = new THREE.DirectionalLightHelper( dLight, 0.5, 0x333333 );
+			scene.add( dlh );
+
+			// ground
+			// var gh = new THREE.GridHelper( 2, 10, 0x000000, 0x808080 );
+			// scene.add( gh );
+
+			// ---------------------------------------------------------------
+
+			var wallGeo = new THREE.PlaneBufferGeometry( 10, 10 );
+			var wallMat = new THREE.MeshPhongMaterial();
+			var wall = new THREE.Mesh( wallGeo, wallMat );
+			scene.add( wall );
+
+			// ---------------------------------------------------------------
+
+			var clockGroup = new THREE.Group();
+			scene.add( clockGroup );
+			// clockGroup.add( new THREE.AxesHelper( 2 ) );
+
+			// face
+
+			var faceGeo = new THREE.CircleBufferGeometry( 1, 32 );
+			var faceMat = new THREE.MeshPhongMaterial();
+			var face = new THREE.Mesh( faceGeo, faceMat );
+			face.position.z = 0.3;
+			clockGroup.add( face );
+
+			// border
+
+			var circle = new THREE.Shape();
+			circle.absarc( 0, 0, 1.1, 0, Math.PI * 2 );
+
+			var hole = new THREE.Path();
+			hole.absarc( 0, 0, 1, 0, Math.PI * 2 );
+			circle.holes.push( hole );
+
+			var tubeExtrudeSettings = {
+				curveSegments: 20,
+				depth: .4,
+				steps: 1,
+				bevelEnabled: false
+			};
+			var tubeGeo = new THREE.ExtrudeGeometry( circle, tubeExtrudeSettings );
+			// tubeGeo.center();
+			var tubeMat = new THREE.MeshPhongMaterial({ color: 0xdddddd });
+			var border = new THREE.Mesh( tubeGeo, tubeMat );
+			// border.add( new THREE.AxesHelper(2) );
+			clockGroup.add( border );
+
+			// tick marks
+
+			var center = new THREE.Vector3();
+
+			var handMat = new THREE.MeshPhongMaterial({ color: 0x444444 });
+
+			var hourTickGeo = new THREE.BoxBufferGeometry( .02, .02, .1 );
+			hourTickGeo.translate( 0, 0, .05 );
+
+			for ( var i = 0; i < 12; i ++ ) {
+				var tickMark = new THREE.Mesh( hourTickGeo, handMat );
+				var angle = i / 12 * 2 * Math.PI;
+				tickMark.position.x = Math.cos( angle ) * 0.9;
+				tickMark.position.y = Math.sin( angle ) * 0.9;
+				tickMark.lookAt( center );
+				// tickMark.add( new THREE.AxesHelper() );
+
+				face.add( tickMark );
+			}
+
+			var minuteTickGeo = new THREE.BoxBufferGeometry( .02, .02, .04 );
+			minuteTickGeo.translate( 0, 0, .02 );
+
+			for ( var i = 0; i < 60; i ++ ) {
+				var tickMark = new THREE.Mesh( minuteTickGeo, handMat );
+				var angle = i / 60 * 2 * Math.PI;
+				tickMark.position.x = Math.cos( angle ) * 0.9;
+				tickMark.position.y = Math.sin( angle ) * 0.9;
+				tickMark.lookAt( center );
+				// tickMark.add( new THREE.AxesHelper() );
+
+				face.add( tickMark );
+			}
+
+			// hands
+
+			var handGroup = new THREE.Group();
+			handGroup.position.z = 0.04;
+			face.add( handGroup );
+
+			var handCenerGeo = new THREE.CylinderBufferGeometry( .03, .03, .1, 32 );
+			handCenerGeo.rotateX( Math.PI / 2 );
+			var handCenter = new THREE.Mesh( handCenerGeo, handMat );
+			handGroup.add( handCenter );
+
+			var handGeo = new THREE.BoxBufferGeometry( .04, .04, .04 );
+			handGeo.translate( 0, 0.02, 0.02 );
+
+			var handHour = new THREE.Mesh( handGeo, handMat );
+			handHour.scale.y = 12;
+			handGroup.add( handHour );
+
+			var handMinute = handHour.clone();
+			handMinute.scale.y = 20;
+			handGroup.add( handMinute );
+
+			var handSecond = handHour.clone();
+			handSecond.scale.set( 0.5, 21, 0.5 );
+			handGroup.add( handSecond );
+
+			// ---------------------------------------------------------------
+
+			// text
+
+			var robotoBoldKey = 'roboto-bold';
+			var fileName = 'https://cdn.jsdelivr.net/gh/davidlyons/text-sdf-bitmap/fonts/roboto/bitmap/' + robotoBoldKey;
+			var jsonPath = fileName + '.json';
+			var imagePath = fileName + '.png';
+
+			TextBitmap.load( robotoBoldKey, jsonPath, imagePath );
+
+			THREE.DefaultLoadingManager.onProgress = function ( url, itemsLoaded, itemsTotal ) {
+				// console.log( 'Loading file: ' + url + '.\nLoaded ' + itemsLoaded + ' of ' + itemsTotal + ' files.' );
+			};
+
+			THREE.DefaultLoadingManager.onLoad = function ( ) {
+				// console.log( 'Loading Complete!');
+
+				for ( var i = 1; i <= 12; i++ ) {
+					var bmtext = new TextBitmap({
+						text: i.toString(),
+						fontKey: robotoBoldKey,
+						width: 1000,
+						align: 'center',
+						valign: 'center',
+						lineHeight: 80,
+						letterSpacing: 1,
+						scale: 0.0015,
+						color: "#333",
+						outlineColor: "#000",
+					});
+
+					bmtext.material.uniforms.smoothing.value = 0.3;
+					bmtext.material.depthTest = true;
+
+					var angle =  - i / 12 * 2 * Math.PI + Math.PI / 2;
+					bmtext.position.x = Math.cos( angle ) * 0.6;
+					bmtext.position.y = Math.sin( angle ) * 0.6;
+					bmtext.position.z = 0.01;
+
+					bmtext.remove( bmtext.hitBox );
+					face.add( bmtext );
+				}
+
+				time = new TextBitmap({
+					text: '0:00',
+					fontKey: robotoBoldKey,
+					width: 1000,
+					align: 'center',
+					valign: 'center',
+					lineHeight: 80,
+					letterSpacing: 1,
+					scale: 0.002,
+					color: "#333",
+					outlineColor: "#000",
+				});
+
+				time.material.uniforms.smoothing.value = 0.3;
+				time.material.depthTest = true;
+				time.position.set( 0, -1.5, .2 );
+				time.remove( time.hitBox );
+				clockGroup.add( time );
+
+			};
+
+			// ---------------------------------------------------------------
+
+			function updateTime(){
+				var now = new Date();
+				var hour = now.getHours();
+				var minute = now.getMinutes();
+				var second = now.getSeconds();
+
+				// console.log( hour, minute, second );
+
+				// hour
+				hour = hour % 12;
+				hour = ( hour * Math.PI / 6 ) +
+							 ( minute * Math.PI / ( 6 * 60 ) ) +
+							 ( second * Math.PI / ( 360 * 60 ) );
+				handHour.rotation.z = - hour;
+
+				// minute
+				minute = ( minute * Math.PI / 30 ) + ( second * Math.PI / ( 30 * 60 ) );
+				handMinute.rotation.z = - minute;
+
+				// second
+				second = ( second * Math.PI / 30 );
+				handSecond.rotation.z = - second;
+
+				// digital
+				// https://momentjs.com/docs/#/displaying/
+				if ( time ) time.text = moment().format('h:mm A zz');
+			}
+
+			// updateTime();
+
+			setInterval( updateTime, 1000 );
+
+			// ---------------------------------------------------------------
+
+			// shadows
+
+			renderer.shadowMap.enabled = true;
+			renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+			dLight.castShadow = true;
+			dLight.shadow.mapSize.width = 2048;
+			dLight.shadow.mapSize.height = 2048;
+
+			wall.receiveShadow = true;
+			face.receiveShadow = true;
+
+			border.castShadow = true;
+			handCenter.castShadow = true;
+			handHour.castShadow = true;
+			handMinute.castShadow = true;
+			handSecond.castShadow = true;
+
+			// ---------------------------------------------------------------
+
+			window.addEventListener( 'resize', resize, false );
+			function resize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+
+			renderer.setAnimationLoop( loop );
+
+			function loop() {
+
+				controls.update();
+
+				renderer.render( scene, camera );
+			}
+
+		</script>
+
+	</body>
+</html>

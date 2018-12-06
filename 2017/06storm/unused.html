@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="description" content="">
+		<meta name="author" content="">
+
+		<title>Storm</title>
+
+		<link href="../../info.css" rel="stylesheet">
+		
+		<style>
+			* { box-sizing: border-box; }
+
+			html {
+				overflow: hidden;
+			}
+
+			body {
+				margin: 0;
+				padding: 0;
+				overflow: hidden;
+				font-family: Arial, sans-serif;
+				font-size: 13px;
+				line-height: 20px;
+				color: #333;
+				background: #716c7c;
+			}
+		</style>
+
+	</head>
+
+	<body>
+
+		<div id="container"></div>
+
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/build/three.js"></script>
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/controls/OrbitControls.js"></script>
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/Detector.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.0-0/dat.gui.min.js"></script>
+
+		<script src="../../info.js"></script>
+
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var info = new Info(
+				'Storm',
+				'Codevember 2017, Day 6',
+				['Created by <a href="http://davidscottlyons.com">David Lyons</a>'].join('<br>')
+			);
+
+			var gui = new dat.GUI();
+
+			var container = document.getElementById( 'container' );
+
+			var clock = new THREE.Clock();
+			var time = 0;
+
+			var renderer = new THREE.WebGLRenderer( { antialias: true } );
+			// renderer.setClearColor( 0xBBBBBB, 1 );
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			container.appendChild( renderer.domElement );
+
+			var camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, .1, 100000 );
+			camera.position.set( 0, 3, 5 );
+
+			var controls = new THREE.OrbitControls( camera, renderer.domElement );
+			controls.target.y = 1;
+
+			var scene = new THREE.Scene();
+
+			scene.background = new THREE.Color( 0x777777 );
+			// scene.fog = new THREE.Fog( 0xbbbbbb, 2, 8 );
+			scene.fog = new THREE.FogExp2( scene.background, 0.1 );
+
+			// lights
+			var aLight = new THREE.AmbientLight( 0x404040 );
+			scene.add( aLight );
+
+			var dLight1 = new THREE.DirectionalLight( 0xffffff, 0.5 );
+			dLight1.position.set( 1, 1, 1 );
+			scene.add( dLight1 );
+
+			// dlh1 = new THREE.DirectionalLightHelper( dLight1, 0.5 );
+			// scene.add( dlh1 );
+
+			var gh = new THREE.GridHelper( 2, 10, 0x000000, 0xbbbbbb );
+			scene.add( gh );
+
+			// ------------------------------------------------------------//
+
+			// sphere cloud
+
+			var Cloud = function(){
+
+				THREE.Group.call( this );
+
+				var sphereGeo = new THREE.SphereBufferGeometry( .3, 8, 8 );
+				var sphereMat = new THREE.MeshPhongMaterial({
+					color: 0xffffff,
+					specular: 0x111111,
+					shininess: 1
+				});
+				var sphere = new THREE.Mesh( sphereGeo, sphereMat );
+
+				var sphere1 = sphere.clone();
+				sphere1.scale.setScalar( 1.5 );
+				sphere1.position.y = 0.08;
+				this.add( sphere1 );
+
+				// var wireframe = new THREE.WireframeGeometry( sphereGeo );
+				// var line = new THREE.LineSegments( wireframe );
+				// line.material.color.setHex( 0x000000 );
+				// sphere1.add( line );
+
+				var sphere2 = sphere.clone();
+				sphere2.position.x = 0.4;
+				this.add( sphere2 );
+
+				var sphere3 = sphere.clone();
+				sphere3.position.x = - 0.4;
+				this.add( sphere3 );
+
+				var sphere4 = sphere.clone();
+				sphere4.position.x = 0.7;
+				sphere4.position.y = -0.03;
+				sphere4.scale.setScalar( 0.5 );
+				this.add( sphere4 );
+
+				var sphere5 = sphere.clone();
+				sphere5.position.x = - 0.7;
+				sphere5.position.y = - 0.03;
+				sphere5.scale.setScalar( 0.5 );
+				this.add( sphere5 );
+
+				var sphere6 = sphere.clone();
+				sphere6.position.x = - 0.85;
+				sphere6.position.y = - 0.05;
+				sphere6.scale.setScalar( 0.3 );
+				this.add( sphere6 );
+			}
+
+			Cloud.prototype = Object.create( THREE.Group.prototype );
+			Cloud.prototype.constructor = Cloud;
+
+			var cloud = new Cloud();
+			scene.add( cloud );
+			cloud.position.y = 3;
+
+			// var cloud2 = new Cloud();
+			// scene.add( cloud2 );
+			// cloud2.position.x = 2;
+			// cloud2.position.y = 3.3;
+
+			// ------------------------------------------------------------
+
+			// lightning shape
+
+			var lightningPts = [
+				new THREE.Vector2( 10, 0 ),
+				new THREE.Vector2( 36, 0 ),
+				new THREE.Vector2( 23, -20 ),
+				new THREE.Vector2( 38, -20 ),
+				new THREE.Vector2( 8, -60 ),
+				new THREE.Vector2( 14, -32 ),
+				new THREE.Vector2( 0, -32 ),
+				new THREE.Vector2( 10, 0 )
+			];
+
+			for( var i = 0; i < lightningPts.length; i++ ) lightningPts[ i ].multiplyScalar( 0.02 );
+
+			var lightningShape = new THREE.Shape( lightningPts );
+
+			// var lightningMat = new THREE.MeshPhongMaterial({ color: 0xffff00, side: THREE.DoubleSide });
+			// var lightningGeo = new THREE.ShapeBufferGeometry( lightningShape );
+
+			var lightningMat = new THREE.MeshPhongMaterial({ color: 0xffff00 });
+			// var extrudeSettings = { amount: 1, bevelEnabled: true, bevelSegments: 1, steps: 1, bevelSize: 0.2, bevelThickness: 0.2 };
+			var extrudeSettings = { amount: 0.2, bevelEnabled: false, steps: 2 };
+			var lightningGeo = new THREE.ExtrudeGeometry( lightningShape, extrudeSettings );
+
+			lightningGeo.center();
+
+			var lightning = new THREE.Mesh( lightningGeo, lightningMat );
+			lightning.position.y = 2;
+			scene.add( lightning );
+
+			// ------------------------------------------------------------
+
+			// tornado lathe
+
+			var pointsGeo = new THREE.Geometry();
+
+			var points = [];
+
+			for ( var i = 0; i < 10; i ++ ) {
+				var point = new THREE.Vector2(
+					Math.sin( i * 0.2 ) * 8 + 1,
+					i * 2
+				);
+
+				points.push( point );
+
+				var vert = new THREE.Vector3( point.x, point.y, 0 );
+				pointsGeo.vertices.push( vert );
+			}
+
+			var latheGeo = new THREE.LatheBufferGeometry( points, 12 );
+			var latheMat = new THREE.MeshPhongMaterial({
+				color: 0xcccccc,
+				side: THREE.DoubleSide
+			});
+			var lathe = new THREE.Mesh( latheGeo, latheMat );
+			lathe.scale.setScalar( 0.1 );
+			scene.add( lathe );
+
+			// var wireframe = new THREE.EdgesGeometry( latheGeo );
+			// var line = new THREE.LineSegments( wireframe );
+			// line.material.color.setHex( 0x000000 );
+			// lathe.add( line );
+
+			var pointsMat = new THREE.PointsMaterial({
+				color: 0xff0000,
+				size: 0.1,
+				fog: false
+			});
+			var lathePoints = new THREE.Points( pointsGeo, pointsMat );
+			lathePoints.scale.setScalar( 0.1 );
+			lathePoints.position.x = 0.2;
+			scene.add( lathePoints );
+
+			// ------------------------------------------------------------
+
+			// torus tornado
+
+			var tornadoGroup = new THREE.Group();
+			// scene.add( tornadoGroup );
+
+			var torusMat = new THREE.MeshPhongMaterial({
+				color: 0xffffff,
+				specular: 0x111111,
+				shininess: 1
+			});
+
+			for (var i = 0; i < points.length; i++ ) {
+				var radius = points[i].x * 0.1;
+				var torusGeo = new THREE.TorusBufferGeometry( radius, i / points.length * 0.04 + 0.02, 12, 32 );
+				var torus = new THREE.Mesh( torusGeo, torusMat );
+				torus.rotation.x = Math.PI / 2;
+				torus.position.y = points[i].y * 0.1;
+				tornadoGroup.add( torus );
+
+				// var wireframe = new THREE.EdgesGeometry( torusGeo );
+				// var line = new THREE.LineSegments( wireframe );
+				// line.material.color.setHex( 0x000000 );
+				// torus.add( line );
+			}
+
+			// ------------------------------------------------------------
+
+			// todo: lightning lights
+
+			// make everything really dark / midnight blue
+			// only visible during flashes of lightning like rainymood.com
+
+			// ------------------------------------------------------------
+
+			//
+
+			window.addEventListener( 'resize', resize, false );
+
+			function resize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+
+			loop();
+
+			function loop() {
+				requestAnimationFrame( loop );
+
+				controls.update();
+
+				var t = clock.elapsedTime;
+				var dt = clock.getDelta();
+
+				// lathe.rotation.y -= 0.05;
+
+				// cloud.position.y = Math.sin( t * 4 ) / 4 + 2;
+				// cloud.position.x = Math.cos( t );
+				// cloud.position.z = Math.sin( t );
+				// cloud.rotation.y -= 0.01;
+
+				renderer.render( scene, camera );
+			}
+
+		</script>
+
+	</body>
+</html>

@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="description" content="">
+		<meta name="author" content="">
+
+		<title>Music</title>
+
+		<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+
+		<link href="../../info.css" rel="stylesheet">
+
+		<style>
+			* { box-sizing: border-box; }
+
+			html { overflow: hidden; }
+
+			body {
+				margin: 0;
+				padding: 0;
+				overflow: hidden;
+				font-family: Arial, sans-serif;
+				font-size: 13px;
+				line-height: 20px;
+				color: #fff;
+				background: #111;
+			}
+
+			.btn {
+				color: #fff;
+				background: #444;
+				padding: 15px;
+				text-decoration: none;
+				border-radius: 4px;
+				font-weight: bold;
+				z-index: 1;
+				line-height: 1;
+				font-size: 15px;
+			}
+
+			.btn:hover {
+				background: #333;
+			}
+
+			#buttons-top {
+				position: absolute;
+				top: 0;
+				margin: 10px;
+			}
+
+			#buttons-top a {
+				display: inline-block;
+			}
+
+			#fullscreen {
+				position: absolute;
+				margin: 10px;
+				bottom: 0;
+				right: 0;
+			}
+
+			#noDevices {
+				visibility: hidden;
+				position: absolute;
+				bottom: 0;
+				width: 100%;
+				text-align: center;
+				padding: 10px;
+			}
+
+			#webglmessage {
+				position: absolute;
+				top: 0;
+				left: 50%;
+				margin-left: -200px !important;
+			}
+
+		</style>
+
+	</head>
+
+	<body>
+
+		<div id="container"></div>
+
+		<div id="buttons-top">
+			<a id="no-sleep" class="btn" href="#"><i class="fas fa-video"></i></a>
+			<a id="play" class="btn" href="#"><i class="fas fa-play"></i></a>
+		</div>
+
+		<a id="fullscreen" class="btn" href="#"><i class="fas fa-expand"></i></a>
+
+		<div id="noDevices">No MIDI input devices present.</div>
+
+		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/build/three.js"></script>
+		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/examples/js/controls/OrbitControls.js"></script>
+		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/examples/js/WebGL.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.3/dat.gui.min.js"></script>
+		<!-- <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/examples/js/loaders/FBXLoader.js"></script> -->
+		<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.2.0/Tween.min.js"></script> -->
+
+		<script src="https://cdn.jsdelivr.net/gh/spite/THREE.MeshLine@v1.1.0/src/THREE.MeshLine.js"></script>
+
+		<script src="nosleep/nosleep.js"></script>
+		<script src="../../info.js"></script>
+
+		<script>
+
+			if ( WEBGL.isWebGLAvailable() === false ) {
+				document.body.appendChild( WEBGL.getWebGLErrorMessage() );
+			}
+
+			var info = new Info(
+				'Music',
+				[
+					'Codevember 2018, Day 5',
+					'MIDI Oscilloscope, based on Chris Wilson\'s Web MIDI + WebAudio <a href="https://github.com/cwilso/monosynth/blob/gh-pages/index.html">monosynth</a>.',
+					'Created by <a href="http://davidscottlyons.com" target="_blank">David Lyons</a>'
+				].join('<br>')
+			);
+
+			var container = document.getElementById( 'container' );
+
+			var renderer = new THREE.WebGLRenderer( { antialias: true } );
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			container.appendChild( renderer.domElement );
+
+			var camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, .1, 1000 );
+			camera.position.set( 0, 0, 3 );
+
+			var controls = new THREE.OrbitControls( camera, renderer.domElement );
+			controls.screenSpacePanning = true;
+			controls.enablePan = false;
+			controls.enableRotate = false;
+
+			var scene = new THREE.Scene();
+			scene.background = new THREE.Color( 0x000000 );
+
+			// lights
+			var aLight = new THREE.AmbientLight( 0x404040 );
+			scene.add( aLight );
+
+			var dLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+			dLight.position.set( 0, 1, 1 );
+			scene.add( dLight );
+
+			// ground
+			// var gh = new THREE.GridHelper( 6, 12, 0x555555, 0x333333 );
+			// gh.rotation.x = Math.PI / 2;
+			// scene.add( gh );
+
+			// ---------------------------------------------------------------
+
+			// web midi
+
+			// https://www.smashingmagazine.com/2018/03/web-midi-api/
+
+			// works on Android Chrome with USB OTG?
+
+			var midiAccess;
+
+			navigator.requestMIDIAccess().then( onMIDISuccess, onMIDIFailure );
+
+			function onMIDISuccess( midi ) {
+
+				midiAccess = midi;
+
+				hookUpMidi();
+				midiAccess.onstatechange = hookUpMidi;
+			}
+
+			function hookUpMidi() {
+
+				var inputs = midiAccess.inputs;
+				// var outputs = midiAccess.outputs;
+
+				//
+
+				var deviceConnected = false;
+
+				for ( var input of inputs.values() ) {
+					input.onmidimessage = MIDIMessageEventHandler;
+					deviceConnected = true;
+				}
+
+				var noDevices = document.getElementById('noDevices');
+				noDevices.style.visibility = deviceConnected ? 'hidden' : 'visible';
+
+			}
+
+			// https://github.com/cwilso/monosynth/blob/gh-pages/index.html
+
+			function MIDIMessageEventHandler(event) {
+
+				// Mask off the lower nibble (MIDI channel)
+				// var command = event.data[0] & 0xf0;
+
+				var command = event.data[0];
+				var note = event.data[1];
+				var velocity = event.data[2];
+
+				var dataString = '[' + command + ', ' + note + ', ' + velocity + ']';
+
+				// console.log( dataString );
+
+				switch ( command ) {
+
+					// arcade buttons
+
+					case 146:
+						if (velocity != 0) {
+							// console.log('ch3, note on: ' + dataString);
+							// todo: dispatch note # press began event
+							noteOn( note );
+							break;
+						}
+
+					case 130:
+						// console.log('ch3, note off: ' + dataString);
+						// todo: dispatch note # press ended event
+						noteOff( note );
+						break;
+
+					// bank and side buttons
+
+					case 147:
+						// console.log('ch4, note on: ' + dataString);
+						if ( note > 3 ) {
+							var button = ( note - 20 ) % 6 + 1;
+							// todo: dispatch bank # press began event
+							sideButtonOn( button );
+						}
+						break;
+
+					case 131:
+						// console.log('ch4, note off: ' + dataString);
+						break;
+
+					case 179:
+						if ( note < 4 ) {
+							// console.log('message: ' + dataString);
+							edgeTilt( note, velocity )
+						}
+						break;
+				}
+
+			}
+
+			function onMIDIFailure() {
+				console.log('Could not access your MIDI devices.');
+			}
+
+			// --------------------------------------------------------
+
+			var context = new AudioContext();
+
+			var oscillator = context.createOscillator();
+			oscillator.type = 'square';
+			oscillator.frequency.setValueAtTime(110, 0);
+
+			var gainNode = context.createGain();
+			oscillator.connect(gainNode);
+			gainNode.connect(context.destination);
+			gainNode.gain.value = 0.0;  // Mute the sound
+			oscillator.start(0);
+
+			// https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Visualizations_with_Web_Audio_API#Creating_a_waveformoscilloscope
+			var analyser = context.createAnalyser();
+			gainNode.connect(analyser);
+			// analyser.fftSize = 1024;
+			var bufferLength = analyser.frequencyBinCount;
+			var dataArray = new Uint8Array(bufferLength);
+
+			var lineGeo = new THREE.Geometry();
+			var width = 6;
+			for( var i = 0; i < bufferLength; i++ ) {
+				var x = width * i / bufferLength - ( width * 0.5 );
+				lineGeo.vertices.push( new THREE.Vector3( x, 0, 0) );
+			}
+
+			var lineMat = new THREE.LineBasicMaterial( { color: 0x00ccff } );
+			var line = new THREE.Line( lineGeo, lineMat );
+			scene.add( line );
+
+			// var line = new MeshLine();
+			// line.setGeometry( lineGeo );
+			// var lineMat = new MeshLineMaterial({
+			// 	color: new THREE.Color(0x00ccff),
+			// 	lineWidth: 0.02
+			// });
+			// var mesh = new THREE.Mesh( line.geometry, lineMat );
+			// scene.add( mesh );
+
+			function update() {
+				analyser.getByteTimeDomainData( dataArray );
+
+				// console.log( dataArray[0] );
+
+				for ( var i = 0; i < bufferLength; i++ ) {
+					var v = dataArray[i] / 128.0;
+					lineGeo.vertices[i].y = (v - 1) * 0.5;
+				}
+
+				lineGeo.verticesNeedUpdate = true;
+				// line.setGeometry( lineGeo );
+			}
+
+			var gui = new dat.GUI();
+
+			var options = {
+				attack: 0.005,// attack speed
+				release: 0.05, // release speed
+				portamento: 0.0001, // portamento/glide speed // 0.05
+				types: ['sine', 'square', 'sawtooth', 'triangle'],
+				bank: 0
+			};
+
+			gui.add(options, 'attack', 0, .1);
+			gui.add(options, 'release', 0, .1);
+			gui.add(options, 'portamento', 0, .1);
+			gui.add(oscillator, 'type', options.types).listen();
+			gui.add(oscillator.detune, 'value', -1000, 1000).name('detune').listen();
+
+			var activeNotes = []; // the stack of actively-pressed keys
+
+			// https://developers.google.com/web/updates/2017/09/autoplay-policy-changes#webaudio
+			// Resume playback when user interacts with the page
+			var playButton = document.querySelector('#play');
+			playButton.addEventListener('click', function(e) {
+				e.preventDefault();
+				context.resume().then(function(){
+					console.log('Audio playback resumed successfully');
+				});
+				playButton.parentNode.removeChild( playButton );
+			});
+
+			var fullscreen = document.querySelector('#fullscreen');
+			fullscreen.addEventListener('click', function(e){
+				e.preventDefault();
+				renderer.domElement.webkitRequestFullScreen();
+			})
+
+			function frequencyFromNoteNumber( note ) {
+				var frequency = 440 * Math.pow( 2, ( note - 69 ) / 12 );
+				return frequency;
+			}
+
+			function noteOn(noteNumber) {
+				activeNotes.push( noteNumber );
+				oscillator.frequency.cancelScheduledValues( 0 );
+				var frequency = frequencyFromNoteNumber( noteNumber );
+				oscillator.frequency.setTargetAtTime( frequency, 0, options.portamento );
+				gainNode.gain.cancelScheduledValues( 0 );
+				gainNode.gain.setTargetAtTime( 1.0, 0, options.attack );
+			}
+
+			function noteOff(noteNumber) {
+				var position = activeNotes.indexOf( noteNumber );
+				if ( position != -1 ) {
+					activeNotes.splice( position, 1 );
+				}
+				if ( activeNotes.length == 0 ) {	// shut off the gainNode
+					gainNode.gain.cancelScheduledValues( 0 );
+					gainNode.gain.setTargetAtTime( 0.0, 0, options.release );
+				} else {
+					oscillator.frequency.cancelScheduledValues( 0 );
+					var note = activeNotes[ activeNotes.length - 1 ];
+					var frequency =  frequencyFromNoteNumber( note );
+					oscillator.frequency.setTargetAtTime( frequency, 0, options.portamento );
+				}
+			}
+
+			function sideButtonOn( button ) {
+				switch( button ) {
+					case 1: oscillator.type = 'sine'; break;
+					case 2: oscillator.type = 'square'; break;
+					case 3: oscillator.type = 'sawtooth'; break;
+					case 4: oscillator.type = 'triangle'; break;
+				}
+
+				// cycle
+				// if ( button  == 1 ) {
+				// 	var i = options.types.indexOf( oscillator.type ) + 1;
+				// 	if ( i > options.types.length - 1 ) i = 0;
+				// 	oscillator.type = options.types[i];
+				// }
+			}
+
+			var dMap = ['left', 'up', 'right', 'down'];
+
+			function edgeTilt( note, velocity ) {
+
+				var dir = dMap[ note ];
+
+				var pct = velocity / 128;
+
+				if ( dir == 'left' ) {
+
+					oscillator.detune.value = - pct * 420;
+
+				} else if ( dir == 'right' ) {
+
+					oscillator.detune.value = pct * 420;
+
+				}
+
+			}
+
+			// ---------------------------------------------------------------
+
+			// midi message syntax
+			// http://newt.phys.unsw.edu.au/jw/notes.html
+
+			// midi fighter colors, pg 4:
+			// https://drive.google.com/file/d/0B-QvIds_FsH3OHhuZlpzVkM2QjQ/view
+
+			var colors = {
+				red: 13,
+				orange: 25,
+				yellow: 37,
+				green: 49,
+				darkgreen: 61,
+				cyan: 73,
+				blue: 85,
+				purple: 97,
+				pink: 109,
+				default: 121,
+				black: 0
+			};
+
+			var keys = Object.keys( colors );
+
+			var ch3on = 146;
+			var ch4on = 147;
+			var ch4off = 131;
+
+			options.colorBank1 = function() {
+				for ( var output of midiAccess.outputs.values() ) {
+					for ( var n = 36; n <= 51; n++ ) {
+						var c = n % 4 + 5;
+						var color = colors[ keys[c] ];
+						output.send( [ch3on, n, color] );
+					}
+				}
+			};
+
+			options.clearColor = function() {
+				for ( var output of midiAccess.outputs.values() ) {
+					for ( var n = 36; n <= 51; n++ ) {
+						output.send( [ch3on, n, colors.black] );
+					}
+				}
+			};
+
+			options.gate = function() {
+				for ( var output of midiAccess.outputs.values() ) {
+					for ( var n = 36; n <= 51; n++ ) {
+						output.send( [ch4on, n, 39] );
+					}
+				}
+			};
+
+			options.pulse = function() {
+				for ( var output of midiAccess.outputs.values() ) {
+					for ( var n = 36; n <= 51; n++ ) {
+						output.send( [ch4on, n, 48] );
+					}
+				}
+			};
+
+			options.animationOff = function() {
+				for ( var output of midiAccess.outputs.values() ) {
+					for ( var n = 36; n <= 51; n++ ) {
+						output.send( [ch4off, n, 39] );
+					}
+				}
+			};
+			
+			gui.add(options, 'bank', 0, 3).step(1).onChange(function(bank){
+				for ( var output of midiAccess.outputs.values() ) {
+					output.send( [ch4on, bank, 127] );
+				}
+			});
+
+			gui.add(options, 'colorBank1');
+			gui.add(options, 'clearColor');
+			gui.add(options, 'gate');
+			gui.add(options, 'pulse');
+			gui.add(options, 'animationOff');
+
+			// ---------------------------------------------------------------
+
+			window.addEventListener( 'resize', resize, false );
+			function resize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+
+			renderer.setAnimationLoop( loop );
+
+			function loop() {
+
+				update();
+
+				controls.update();
+
+				renderer.render( scene, camera );
+
+			}
+
+		</script>
+
+	</body>
+</html>

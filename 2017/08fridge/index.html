@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="description" content="">
+		<meta name="author" content="">
+
+		<title>Fridge</title>
+
+		<link href="../../info.css" rel="stylesheet">
+		
+		<style>
+			* { box-sizing: border-box; }
+
+			html { overflow: hidden; }
+
+			body {
+				margin: 0;
+				padding: 0;
+				overflow: hidden;
+				font-family: Arial, sans-serif;
+				font-size: 13px;
+				line-height: 20px;
+				color: #333;
+				background: #5ebd82;
+			}
+
+		</style>
+
+	</head>
+
+	<body>
+
+		<div id="container"></div>
+
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/build/three.js"></script>
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/controls/OrbitControls.js"></script>
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/Detector.js"></script>
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/loaders/FBXLoader.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.1.1/Tween.min.js"></script>
+
+		<script src="../../info.js"></script>
+
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var info = new Info(
+				'Fridge',
+				[
+					'Codevember 2017, Day 8',
+					'Modeled in Maya',
+					'Created by <a href="http://davidscottlyons.com">David Lyons</a>'
+				].join('<br>')
+			);
+
+			// -----------------------------------------------------------------
+
+			var OutlineShader = {
+
+				uniforms: {
+					offset: { type: 'f', value: 0.01 }
+				},
+
+				vertexShader: [
+
+					"uniform float offset;",
+
+					"void main() {",
+					"  vec4 pos = modelViewMatrix * vec4( position + normal * offset, 1.0 );",
+					"  gl_Position = projectionMatrix * pos;",
+					"}"
+
+				].join('\n'),
+
+				fragmentShader: [
+
+					"void main() {",
+					"  gl_FragColor = vec4( 0.0, 0.0, 0.0, 1.0 );",
+					"}"
+
+				].join('\n')
+
+			};
+
+			// -----------------------------------------------------------------
+
+			var container = document.getElementById( 'container' );
+
+			var renderer = new THREE.WebGLRenderer( { antialias: true } );
+			renderer.setClearColor( 0x5ebd82, 1 );
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer.domElement.style.cursor = 'pointer';
+
+			var camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, .1, 100000 );
+			camera.position.set( -2.0, 2.6, 3.5 );
+
+			var controls = new THREE.OrbitControls( camera, renderer.domElement );
+			controls.target.y = 0.9;
+			controls.update();
+			controls.enabled = false;
+
+			var scene = new THREE.Scene();
+
+			var aLight = new THREE.AmbientLight( 0x404040 );
+			scene.add( aLight );
+
+			var dLight = new THREE.DirectionalLight( 0xffffff, 0.6 );
+			dLight.position.set( 0.1, 0.7, 1 );
+			scene.add( dLight );
+
+			// var dlh = new THREE.DirectionalLightHelper( dLight, 0.3 );
+			// scene.add( dlh );
+
+			// var gh = new THREE.GridHelper( 2, 10, 0x000000, 0x808080 );
+			// scene.add( gh );
+
+			//
+
+			var fbxLoader = new THREE.FBXLoader();
+
+			// var path = 'https://cdn.rawgit.com/davidlyons/codevember17/v1/08fridge/';
+			fbxLoader.load('model/fridge.fbx', function(fbx){
+
+				var fridgeGroup = fbx.children[0];
+
+				var back = fridgeGroup.getObjectByName('back');
+				var topDoor = fridgeGroup.getObjectByName('topDoor');
+				var bottomDoor = fridgeGroup.getObjectByName('bottomDoor');
+				var topHandle = fridgeGroup.getObjectByName('topHandle');
+				var bottomHandle = fridgeGroup.getObjectByName('bottomHandle');
+
+				// materials
+
+				var fridgeMat = new THREE.MeshToonMaterial({
+					color: 0xcccccc,
+					shininess: 1,
+					specular: 0xcccccc
+				});
+
+				var handleMat = new THREE.MeshToonMaterial({
+					color: 0x777777,
+					shininess: 1
+				});
+
+				back.material = topDoor.material = bottomDoor.material = fridgeMat;
+				topHandle.material = bottomHandle.material = handleMat;
+
+				// outline
+
+				var outlineMat = new THREE.ShaderMaterial({
+					uniforms: THREE.UniformsUtils.clone( OutlineShader.uniforms ),
+					vertexShader: OutlineShader.vertexShader,
+					fragmentShader: OutlineShader.fragmentShader,
+					side: THREE.BackSide
+				});
+
+				var children = [back, topDoor, bottomDoor, topHandle, bottomHandle];
+				children.forEach(function(obj){
+					var outline = new THREE.Mesh( obj.geometry, outlineMat );
+					obj.add( outline );
+				});
+
+				scene.add( fridgeGroup );
+
+				topDoor.userData.isOpen = false;
+				bottomDoor.userData.isOpen = false;
+
+				// input
+
+				function toggleDoor( door ) {
+
+					if ( door.userData.isOpen ) {
+
+						var close = new TWEEN.Tween( door.rotation )
+							.to( { y: 0 }, 200 )
+							.easing( TWEEN.Easing.Exponential.In )
+							.start();
+
+						// impact from the slam
+						var slam = new TWEEN.Tween( fridgeGroup.rotation )
+							.to( { y: 0 }, 200 )
+							.delay( 200 )
+							.easing( TWEEN.Easing.Quintic.Out )
+							.start();
+
+					} else {
+
+						var open = new TWEEN.Tween( door.rotation )
+							.to( { y: Math.PI / 2 }, 800 )
+							.easing( TWEEN.Easing.Elastic.Out )
+							.start();
+
+						// so impact doesn't have to reset
+						var slide = new TWEEN.Tween( fridgeGroup.rotation )
+							.to( { y: THREE.Math.degToRad(10) }, 200 )
+							.delay( 150 )
+							.easing( TWEEN.Easing.Cubic.Out )
+							.start();
+					}
+
+					door.userData.isOpen = !door.userData.isOpen;
+
+				}
+
+				var which = true;
+				var count = 0;
+
+				function mousedown(e){
+
+					TWEEN.removeAll();
+
+					var door = which ? topDoor : bottomDoor;
+					door.rotation.y = door.userData.isOpen ? Math.PI / 2 : 0;
+
+					count++;
+					if ( count % 2 ) which = !which;
+
+					door = which ? topDoor : bottomDoor;
+					toggleDoor( door );
+
+				}
+
+				renderer.domElement.addEventListener('mousedown', mousedown, false);
+
+				container.appendChild( renderer.domElement );
+				loop();
+
+			});
+
+			//
+
+			window.addEventListener( 'resize', resize, false );
+			function resize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+
+			function loop() {
+				requestAnimationFrame( loop );
+				TWEEN.update();
+				// controls.update();
+				renderer.render( scene, camera );
+			}
+
+		</script>
+
+	</body>
+</html>
