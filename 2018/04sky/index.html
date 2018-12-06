@@ -42,7 +42,7 @@
 		<div id="container"></div>
 
 		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/build/three.js"></script>
-		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/examples/js/controls/OrbitControls.js"></script>
+		<!-- <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/examples/js/controls/OrbitControls.js"></script> -->
 		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/examples/js/WebGL.js"></script>
 		<!-- <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/examples/js/loaders/FBXLoader.js"></script> -->
 		<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.3/dat.gui.min.js"></script> -->
@@ -74,8 +74,8 @@
 			var camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, .1, 1000 );
 			camera.position.set( 0, 0, 4 );
 
-			var controls = new THREE.OrbitControls( camera, renderer.domElement );
-			controls.screenSpacePanning = true;
+			// var controls = new THREE.OrbitControls( camera, renderer.domElement );
+			// controls.screenSpacePanning = true;
 
 			var scene = new THREE.Scene();
 			scene.background = new THREE.Color( 0x4831ab );
@@ -97,8 +97,8 @@
 			var cloudsBox = new THREE.Box3();
 			cloudsBox.setFromCenterAndSize( new THREE.Vector3(), cloudsSize );
 
-			var cloudsBoxHelper = new THREE.Box3Helper( cloudsBox );
-			scene.add( cloudsBoxHelper );
+			// var cloudsBoxHelper = new THREE.Box3Helper( cloudsBox );
+			// scene.add( cloudsBoxHelper );
 
 			// -----------------------------------------------------------------
 
@@ -152,8 +152,8 @@
 				var box = new THREE.Box3();
 				box.setFromCenterAndSize( center, size );
 
-				var boxHelper = new THREE.Box3Helper( box );
-				this.add( boxHelper );
+				// var boxHelper = new THREE.Box3Helper( box );
+				// this.add( boxHelper );
 
 				//
 
@@ -423,8 +423,9 @@
 
 				var box = new THREE.Box3();
 				box.setFromCenterAndSize( points.position, range );
-				var boxHelper = new THREE.Box3Helper( box );
-				this.add( boxHelper );
+
+				// var boxHelper = new THREE.Box3Helper( box );
+				// this.add( boxHelper );
 
 			}
 
@@ -475,7 +476,7 @@
 
 			function loop() {
 
-				controls.update();
+				// controls.update();
 
 				var time = clock.getElapsedTime();
 
