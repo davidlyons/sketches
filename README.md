@@ -4,8 +4,9 @@
 
 Three.js sketches using topics from [codevember.xyz](http://codevember.xyz/)
 
-[codepen.io/davidlyons](https://codepen.io/davidlyons/)
 [davidscottlyons.com/projects/code-sketches](http://davidscottlyons.com/projects/code-sketches)
 
+[codepen.io/davidlyons](https://codepen.io/davidlyons/)
+
 Also using as a model file host for codepen
-`https://cdn.rawgit.com/davidlyons/codevember17/v1/[folder]/model/[model].fbx`
+`https://cdn.jsdelivr.net/gh/davidlyons/sketches@v2/2017/[folder]/model/[model].fbx`
