@@ -41,18 +41,18 @@
 
 		<div id="container"></div>
 
-		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r101/build/three.js"></script>
-		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r101/examples/js/controls/OrbitControls.js"></script>
-		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r101/examples/js/WebGL.js"></script>
-		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r101/examples/js/loaders/FBXLoader.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.5/dat.gui.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.2.0/Tween.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r110/build/three.js"></script>
+		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r110/examples/js/controls/OrbitControls.js"></script>
+		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r110/examples/js/WebGL.js"></script>
+		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r110/examples/js/loaders/FBXLoader.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.4.0/Tween.min.js"></script>
 
 		<script src="../../info.js"></script>
 
 		<script>
 
-			if ( WEBGL.isWebGLAvailable() === false ) {
+			if ( THREE.WEBGL.isWebGLAvailable() === false ) {
 				document.body.appendChild( WEBGL.getWebGLErrorMessage() );
 			}
 
