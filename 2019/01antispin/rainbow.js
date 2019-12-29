@@ -10,12 +10,12 @@ renderer.setPixelRatio( window.devicePixelRatio );
 renderer.setSize( window.innerWidth, window.innerHeight );
 container.appendChild( renderer.domElement );
 
-renderer.setClearColor('#210C47', 1);
+renderer.setClearColor('#130b44', 1);
 
 const scene = new THREE.Scene();
 
 var aspect = window.innerWidth / window.innerHeight;
-var frustumSize = 2.2;
+var frustumSize = 2.8;
 
 const camera = new THREE.OrthographicCamera(
   - frustumSize * aspect,
@@ -197,7 +197,7 @@ for ( var i = 0; i < 3; i++ ) {
 
 // ----------------------------------------------------------
 
-// flower / seed of life
+// flower of life / seed of life
 // thin white lines
 
 var radius = 2;
@@ -212,7 +212,7 @@ var circleMat = new THREE.MeshBasicMaterial({
   color: 0xcccccc,
   side: THREE.DoubleSide,
   transparent: true,
-  opacity: 0.1
+  opacity: 0.07
 });
 
 var circle = new THREE.Mesh( circleGeo, circleMat );
