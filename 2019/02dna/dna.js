@@ -210,21 +210,23 @@ var line = new THREE.Line( geometryPoints, lineMat );
 
 // ------------------------------------------
 
+var cylLength = 1.65;
+var cylGeo = new THREE.CylinderBufferGeometry( .1, .1, cylLength / 2, 16, 1, true );
+
+var sphereGeo = new THREE.SphereBufferGeometry( 0.3, 32, 32 );
+
 class DNA extends THREE.Group {
 
   constructor( curve, total ) {
 
     super();
 
-    var cylLength = 1.65;
-    var cylGeo = new THREE.CylinderBufferGeometry( .1, .1, cylLength / 2, 16, 1, true );
     var cylinder = new THREE.Mesh( cylGeo, fresnelMat );
     cylinder.position.y = cylLength / 4;
 
     var cylinder2 = new THREE.Mesh( cylGeo, fresnelMat2 );
     cylinder2.position.y =  - cylLength / 4;
 
-    var sphereGeo = new THREE.SphereBufferGeometry( 0.3, 32, 32 );
     var sphere = new THREE.Mesh( sphereGeo, fresnelMat );
     sphere.position.y = cylLength / 2 + 0.25;
     
