@@ -1,0 +1,1 @@
+pyramid speaker sound toy
