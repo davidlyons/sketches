@@ -241,8 +241,9 @@
 			renderer.domElement.style.cursor = 'pointer';
 
 			var i = 0;
-			renderer.domElement.addEventListener('click', click, false);
-			function click(){
+
+			function mousedown(e){
+				e.preventDefault();
 				if (i >= cakes.children.length) {
 					i = 0;
 					TWEEN.removeAll();
@@ -252,6 +253,9 @@
 					cake.drop();
 				}
 			}
+
+			renderer.domElement.addEventListener('mousedown', mousedown, false);
+			renderer.domElement.addEventListener('touchstart', mousedown, false);
 
 			//
 

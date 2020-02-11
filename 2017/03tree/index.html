@@ -89,6 +89,7 @@
 			//
 
 			var gui = new dat.GUI();
+			gui.close();
 
 			var container = document.getElementById( 'container' );
 
@@ -341,14 +342,19 @@
 			}
 
 			function mousedown(e){
+				e.preventDefault();
 				mouse.isDown = true;
-				setNDC( mouseOnDown, e );
+				var event = e.touches && e.touches[0] || e;
+				setNDC( mouseOnDown, event );
 				renderer.domElement.style.cursor = 'move';
+
 				canvas.addEventListener('mousemove', mousemove, false);
+				canvas.addEventListener('touchmove', mousemove, false);
 			}
 
 			function mousemove(e){
-				setNDC( mouse, e );
+				var event = e.touches && e.touches[0] || e;
+				setNDC( mouse, event );
 				diff.subVectors( mouseOnDown, mouse );
 				var x = THREE.Math.clamp( diff.x, -0.5, 0.5 );
 				updateTree( x );
@@ -357,11 +363,16 @@
 			function mouseup(){
 				mouse.isDown = false;
 				renderer.domElement.style.cursor = 'pointer';
+
 				canvas.removeEventListener('mousemove', mousemove, false)
+				canvas.removeEventListener('touchmove', mousemove, false)
 			}
 
 			canvas.addEventListener('mousedown', mousedown, false);
 			canvas.addEventListener('mouseup', mouseup, false);
+
+			canvas.addEventListener('touchstart', mousedown, false);
+			canvas.addEventListener('touchend', mouseup, false);
 
 			//
 
@@ -379,7 +390,7 @@
 				// TWEEN.update();
 
 				// frame += 0.05;
-				
+
 				// shaderMaterial.uniforms.amplitude.value = Math.sin( frame * 3 ) / 2 + 3.0;
 
 				// rotation.x = Math.cos( frame / 2 ) / 20;

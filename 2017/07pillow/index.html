@@ -152,13 +152,15 @@
 
 			var clickRequest = false;
 
-			window.addEventListener( 'mousedown', mousedown, false );
-
 			function mousedown(e){
+				e.preventDefault();
 				if ( ! clickRequest ) {
 					clickRequest = true;
 				}
 			}
+
+			renderer.domElement.addEventListener( 'mousedown', mousedown, false );
+			renderer.domElement.addEventListener( 'touchstart', mousedown, false );
 
 			var range = 1.5;
 			var xPos = -range;

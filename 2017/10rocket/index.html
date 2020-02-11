@@ -459,7 +459,8 @@
 
 			// scene.add( targetSphere );
 
-			function mousemove(e){
+			function mousemove( event ){
+				var e = event.touches && event.touches[0] || event;
 				mouse.x = ( e.clientX / window.innerWidth ) * 2 - 1;
 				mouse.y = - ( e.clientY / window.innerHeight ) * 2 + 1;
 
@@ -471,7 +472,9 @@
 				// targetSphere.position.copy( rocketTarget );
 			}
 
-			function mousedown(e){
+			function mousedown( event ){
+
+				event.preventDefault();
 
 				TWEEN.removeAll();
 
@@ -517,6 +520,10 @@
 			renderer.domElement.addEventListener('mousemove', mousemove, false);
 			renderer.domElement.addEventListener('mousedown', mousedown, false);
 			renderer.domElement.addEventListener('mouseup', mouseup, false);
+
+			renderer.domElement.addEventListener('touchmove', mousemove, false);
+			renderer.domElement.addEventListener('touchstart', mousedown, false);
+			renderer.domElement.addEventListener('touchend', mouseup, false);
 
 			// -------------------------------------------
 

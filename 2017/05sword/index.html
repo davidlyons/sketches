@@ -272,6 +272,8 @@
 
 			function mousedown(e){
 
+				e.preventDefault();
+
 				if ( !isTweening ) {
 
 					isTweening = true;
@@ -286,6 +288,7 @@
 			}
 
 			renderer.domElement.addEventListener('mousedown', mousedown, false);
+			renderer.domElement.addEventListener('touchstart', mousedown, false);
 
 			//
 

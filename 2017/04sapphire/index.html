@@ -142,6 +142,7 @@
 			var destination = 0.8;
 
 			function mousedown(e){
+				e.preventDefault();
 				mouseIsDown = true;
 				gemGroup.rotation.set(0,0,0);
 				TWEEN.removeAll();

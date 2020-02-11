@@ -275,8 +275,8 @@
 
 			var mouse = new THREE.Vector2();
 
-			renderer.domElement.addEventListener('mousemove', mousemove, false);
-			function mousemove(e){
+			function mousemove( event ){
+				var e = event.touches && event.touches[0] || event;
 				mouse.x = ( e.clientX / window.innerWidth ) * 2 - 1;
 				mouse.y = - ( e.clientY / window.innerHeight ) * 2 + 1;
 
@@ -293,8 +293,9 @@
 					carrot.rotation.y = 0;
 				});
 
-			renderer.domElement.addEventListener('mousedown', mousedown, false);
-			function mousedown(){
+			function mousedown( event ){
+
+				event.preventDefault();
 
 				if ( !tween.isPlaying() ) {
 
@@ -306,6 +307,12 @@
 				}
 
 			}
+
+			renderer.domElement.addEventListener('mousemove', mousemove, false);
+			renderer.domElement.addEventListener('mousedown', mousedown, false);
+
+			renderer.domElement.addEventListener('touchmove', mousemove, false);
+			renderer.domElement.addEventListener('touchstart', mousedown, false);
 
 			// ---------------------------------------------------------------
 

@@ -58,6 +58,7 @@
 			);
 
 			var gui = new dat.GUI();
+			gui.close();
 
 			var container = document.getElementById( 'container' );
 
@@ -384,6 +385,12 @@
 			}
 
 			// ------------------------------------------------------------
+
+			function touchstart(e) {
+				e.preventDefault();
+			}
+
+			renderer.domElement.addEventListener('touchstart', touchstart, false);
 
 			//
 

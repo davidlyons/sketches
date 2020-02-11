@@ -275,6 +275,8 @@
 
 			function mousedown(e){
 
+				e.preventDefault();
+
 				// remove a random fry
 
 				var i = THREE.Math.randInt( 0, fries.length - 1 );
@@ -309,6 +311,7 @@
 			}
 
 			renderer.domElement.addEventListener('mousedown', mousedown, false);
+			renderer.domElement.addEventListener('touchstart', mousedown, false);
 
 			//
 

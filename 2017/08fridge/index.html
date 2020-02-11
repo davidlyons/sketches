@@ -211,6 +211,8 @@
 
 				function mousedown(e){
 
+					e.preventDefault();
+
 					TWEEN.removeAll();
 
 					var door = which ? topDoor : bottomDoor;
@@ -225,6 +227,7 @@
 				}
 
 				renderer.domElement.addEventListener('mousedown', mousedown, false);
+				renderer.domElement.addEventListener('touchstart', mousedown, false);
 
 				container.appendChild( renderer.domElement );
 				loop();
