@@ -1,9 +1,9 @@
 
-import * as THREE from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r110/build/three.module.js';
-import { OrbitControls } from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r110/examples/jsm/controls/OrbitControls.js';
-import { FBXLoader } from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r110/examples/jsm/loaders/FBXLoader.js';
-import { GUI } from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r110/examples/jsm/libs/dat.gui.module.js';
-import { TWEEN } from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r110/examples/jsm/libs/tween.module.min.js';
+import * as THREE from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r113/build/three.module.js';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r113/examples/jsm/controls/OrbitControls.js';
+import { FBXLoader } from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r113/examples/jsm/loaders/FBXLoader.js';
+import { GUI } from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r113/examples/jsm/libs/dat.gui.module.js';
+import { TWEEN } from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r113/examples/jsm/libs/tween.module.min.js';
 
 const container = document.getElementById( 'container' );
 
