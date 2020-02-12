@@ -411,6 +411,9 @@
 				document.addEventListener( 'mousedown', mousedown, false );
 				document.addEventListener( 'mouseup', mouseup, false );
 
+				document.addEventListener( 'touchstart', mousedown, false );
+				document.addEventListener( 'touchend', mouseup, false );
+
 			});
 
 			// --------------------------------------------------------------
@@ -462,9 +465,11 @@
 
 			event.preventDefault();
 
+			var e = event.touches && event.touches[0] || event;
+
 			// mouse x and y are between -1 and 1 (normalized?)
-			mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-			mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+			mouse.x = ( e.clientX / window.innerWidth ) * 2 - 1;
+			mouse.y = - ( e.clientY / window.innerHeight ) * 2 + 1;
 
 			findIntersections();
 
@@ -496,15 +501,16 @@
 
 			event.preventDefault();
 
+			mousemove( event );
+
 			var intersects = raycaster.intersectObjects( pyramid.children );
 
 			if ( intersects.length > 0 ) {
 
-				controls.enabled = false;
-
 				SELECTED = intersects[ 0 ].object;
 
 				if ( SELECTED.name.startsWith('speaker') ) {
+					controls.enabled = false;
 					speakerActivated( SELECTED );
 				}
 
