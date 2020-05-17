@@ -41,10 +41,10 @@
 
 		<div id="container"></div>
 
-		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r113/build/three.js"></script>
-		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r113/examples/js/controls/OrbitControls.js"></script>
-		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r113/examples/js/WebGL.js"></script>
-		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r113/examples/js/loaders/FBXLoader.js"></script>
+		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r116/build/three.js"></script>
+		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r116/examples/js/controls/OrbitControls.js"></script>
+		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r116/examples/js/WebGL.js"></script>
+		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r116/examples/js/loaders/FBXLoader.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.4.0/Tween.min.js"></script>
 
@@ -56,13 +56,13 @@
 				document.body.appendChild( WEBGL.getWebGLErrorMessage() );
 			}
 
-			// var info = new Info(
-			// 	'New Project',
-			// 	[
-			// 		'<a href="../">Codevember 2018</a>',
-			// 		'Created by <a href="http://davidscottlyons.com">David Lyons</a>'
-			// 	].join('<br>')
-			// );
+			var info = new Info(
+				'New Project',
+				[
+					'Description',
+					'<a href="https://davidlyons.dev">David Lyons</a>'
+				].join('<br>')
+			);
 
 			var container = document.getElementById( 'container' );
 

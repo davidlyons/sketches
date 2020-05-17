@@ -4,7 +4,7 @@
 
 Three.js sketches using topics from [codevember.xyz](http://codevember.xyz/)
 
-[davidscottlyons.com/projects/code-sketches](http://davidscottlyons.com/projects/code-sketches)
+[davidlyons.dev/projects/code-sketches](https://davidlyons.dev/projects/code-sketches)
 
 [codepen.io/davidlyons](https://codepen.io/davidlyons/)
 
