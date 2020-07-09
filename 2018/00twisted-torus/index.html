@@ -1,0 +1,252 @@
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name="description" content="">
+		<meta name="author" content="">
+
+		<title>Twisted Torus</title>
+
+		<style>
+			* { box-sizing: border-box; }
+
+			html { overflow: hidden; }
+
+			body {
+				margin: 0;
+				padding: 0;
+				overflow: hidden;
+				font-family: Arial, sans-serif;
+				font-size: 13px;
+				line-height: 20px;
+				color: #333;
+				background: #bbb;
+			}
+		</style>
+
+	</head>
+
+	<body>
+
+		<div id="container"></div>
+
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r118/build/three.js"></script>
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r118/examples/js/controls/OrbitControls.js"></script>
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/r118/examples/js/loaders/FBXLoader.js"></script>
+
+		<script src="jpalette.js"></script>
+
+		<script>
+
+			// var gui = new dat.GUI();
+
+			var container = document.getElementById( 'container' );
+
+			var scene = new THREE.Scene();
+
+			var renderer = new THREE.WebGLRenderer({
+				antialias: true,
+				preserveDrawingBuffer: true
+			});
+			renderer.setClearColor( 0x999999, 1 );
+			renderer.setPixelRatio( window.devicePixelRatio );
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			container.appendChild( renderer.domElement );
+
+			var camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, .01, 100000 );
+			camera.position.set( 0, 1.6, 3 );
+
+			var controls = new THREE.OrbitControls( camera, renderer.domElement );
+			controls.screenSpacePanning = true;
+			controls.target.y = 1.6;
+
+			var aLight = new THREE.AmbientLight( 0x404040 );
+			scene.add( aLight );
+
+			var dLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+			dLight.position.set( 0, 1, 1 );
+			scene.add( dLight );
+
+			// var gh = new THREE.GridHelper( 2, 10, 0x000000, 0x808080 );
+			// scene.add( gh );
+
+			var fbxLoader = new THREE.FBXLoader();
+
+			// --------------------------------------------------------------
+
+			// var boxGeo = new THREE.BoxBufferGeometry( 0.1, 0.4, 0.4 );
+			// var boxMat = new THREE.MeshNormalMaterial();
+
+			var Ring = function( options ) {
+				// options: numBoxes, multiplier, colors
+				THREE.Group.call( this );
+
+				var scope = this;
+
+				options = scope.options = options || {};
+
+				var numBoxes = options.numBoxes || 70;
+
+				var colors = options.colors || [
+					new jPalette.Color(150, 77, 218, 255), // purple
+					new jPalette.Color(63, 123, 213, 255), // blue
+					new jPalette.Color(212, 86, 214, 255), // pink
+					new jPalette.Color(150, 77, 218, 255), // purple
+				];
+
+				var colorPalette = new jPalette.ColorMap(numBoxes, colors);
+
+				scope.boxes = [];
+
+				fbxLoader.load('flat-box.fbx', function(fbx){
+					for ( var i = 0; i < numBoxes; i++ ) {
+						var boxParent = fbx.clone();
+						boxParent.up.set(0,0,1);
+
+						var angle = i / numBoxes * Math.PI * 2;
+						boxParent.position.x = Math.cos( angle );
+						boxParent.position.y = Math.sin( angle );
+
+						boxParent.lookAt( scene.position );
+
+						var box = boxParent.children[0];
+						var multiplier = options.multiplier || 1;
+						box.rotation.x = - angle * multiplier;
+
+						var c = colorPalette.map[i];
+						box.material = new THREE.MeshPhongMaterial({
+							color: new THREE.Color( c.r/255, c.g/255, c.b/255 )
+						});
+
+						scope.add( boxParent );
+						scope.boxes.push( box );
+					}
+				});
+
+			}
+
+			Ring.prototype = Object.create( THREE.Group.prototype );
+			Ring.prototype.constructor = Ring;
+
+			Ring.prototype.update = function() {
+				for ( var i = 0; i < this.boxes.length; i++ ) {
+					this.boxes[i].rotation.x -= 0.01;
+				}
+			}
+
+			//
+
+			var ring = new Ring();
+			scene.add( ring );
+			ring.position.y = 1.5;
+
+			var ring2 = new Ring({ numBoxes: 80, multiplier: 2 });
+			scene.add( ring2 );
+			ring2.position.y = 1.5;
+			ring2.position.x = 3;
+
+			var ring3 = new Ring({ multiplier: .25 });
+			scene.add( ring3 );
+			ring3.position.y = 1.5;
+			ring3.position.x = -3;
+
+			var rings = [ ring, ring2, ring3 ];
+
+			// --------------------------------------------------------------
+
+			var raycaster = new THREE.Raycaster();
+			var mouse = new THREE.Vector2();
+			var INTERSECTED;
+
+			function raycast() {
+
+				raycaster.setFromCamera( mouse, camera );
+				var intersects = raycaster.intersectObjects( ring.boxes );
+				if ( intersects.length > 0 ) {
+					if ( INTERSECTED != intersects[ 0 ].object ) {
+						if ( INTERSECTED ) {
+							INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+
+							// INTERSECTED.scale.setScalar(1);
+
+							// for ( var i = 0; i < ring.boxes; i++ ) {
+							// 	ring.boxes[i].scale.setScalar(1);
+							// }
+						}
+						INTERSECTED = intersects[ 0 ].object;
+						INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
+						INTERSECTED.material.emissive.setHex( 0xff0000 );
+
+						// INTERSECTED.scale.setScalar(1.1);
+
+						// var index = ring.boxes.indexOf( INTERSECTED );
+						// var range = 8;
+						// for (var i = 1; i < range; i++) {
+						// 	var s = 1 + (.4 * 1 - i/range);
+						// 	ring.boxes[mod(index+i,ring.boxes.length)].scale.setScalar(s);
+						// 	ring.boxes[mod(index-i,ring.boxes.length)].scale.setScalar(s);
+						// }
+					}
+				} else {
+					if ( INTERSECTED ) {
+						INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
+
+						// INTERSECTED.scale.setScalar(1);
+
+						// for ( var i = 0; i < ring.boxes; i++ ) {
+						// 	ring.boxes[i].scale.setScalar(1);
+						// }
+					}
+					INTERSECTED = null;
+				}
+
+			}
+
+			document.addEventListener( 'mousemove', mousemove, false );
+			function mousemove( event ) {
+				event.preventDefault();
+				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+			}
+
+			// --------------------------------------------------------------
+
+			window.addEventListener( 'resize', resize, false );
+			function resize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+			}
+
+			renderer.setAnimationLoop( loop );
+
+			function loop() {
+
+				for ( var i = 0; i < rings.length; i++ ) {
+					rings[i].update();
+				}
+
+				raycast();
+
+				// TWEEN.update();
+				if ( controls.enabled ) {
+					controls.update();
+				}
+
+				renderer.render( scene, camera );
+			}
+
+			function mod(v, l) {
+				while (v < 0) {
+					v += l;
+				}
+				return v % l;
+			}
+
+		</script>
+
+	</body>
+</html>
