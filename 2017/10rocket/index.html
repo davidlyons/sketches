@@ -283,7 +283,58 @@
 
 			// -------------------------------------------
 
-			// fire particles
+			// fire
+
+			var firePoints = [];
+
+			for ( var i = 0; i <= 10; i ++ ) {
+				var point = new THREE.Vector2(
+					Math.sin( i * 0.18 ) * 8,
+					(-10 + i) * 2.5
+				);
+
+				firePoints.push( point );
+			}
+
+			var fireGeo = new THREE.LatheGeometry( firePoints, 32 );
+
+			var fireMat = new THREE.ShaderMaterial({
+				uniforms: {
+					color1: { value: new THREE.Color('yellow') },
+					color2: { value: new THREE.Color(0xff7b00) } // orange
+				},
+				vertexShader: `
+					varying vec2 vUv;
+
+					void main() {
+						vUv = uv;
+						gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+					}
+				`,
+				fragmentShader: `
+					uniform vec3 color1;
+					uniform vec3 color2;
+
+					varying vec2 vUv;
+
+					void main() {
+						gl_FragColor = vec4(mix(color1, color2, vUv.y), 1.0);
+					}
+				`,
+			});
+
+			var fire = new THREE.Mesh(fireGeo, fireMat);
+			fire.scale.setScalar( 0.06 );
+			rocket.add( fire );
+
+			var fireUpdate = function() {
+				fire.scale.y = THREE.Math.randFloat(0.04, 0.08);
+			}
+
+			// -------------------------------------------
+
+
+			// fire particles / stars
 
 			// https://aerotwist.com/tutorials/creating-particles-with-three-js/
 			// https://aerotwist.com/static/tutorials/creating-particles-with-three-js/demo/
@@ -398,22 +449,22 @@
 			}
 
 			// orange
-			var fire = new Particles({
-				color: 0xff5a00,
-				size: 0.4,
-				rangeH: 0.8,
-				rangeV: 2.5,
-				pointCount: 50 
-			});
-			rocket.add( fire );
+			// var fire = new Particles({
+			// 	color: 0xff5a00,
+			// 	size: 0.4,
+			// 	rangeH: 0.8,
+			// 	rangeV: 2.5,
+			// 	pointCount: 50
+			// });
+			// rocket.add( fire );
 
 			// yellow
-			var fire2 = new Particles({
-				color: 0xffc000,
-				size: 0.6,
-				rangeH: 0.5
-			});
-			rocket.add( fire2 );
+			// var fire2 = new Particles({
+			// 	color: 0xffc000,
+			// 	size: 0.6,
+			// 	rangeH: 0.5
+			// });
+			// rocket.add( fire2 );
 
 			// var box = new THREE.BoxHelper( fire.points );
 			// fire.add( box );
@@ -554,8 +605,9 @@
 
 				rocketGroup.rotation.y = Math.cos( time * 8 ) * angle;
 
-				fire.update();
-				fire2.update();
+				// fire.update();
+				// fire2.update();
+				fireUpdate();
 
 				stars.updateConstant();
 
