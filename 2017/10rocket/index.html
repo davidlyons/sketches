@@ -154,7 +154,7 @@
 			var rocketGeo = new THREE.LatheGeometry( points, 32 );
 
 			var rocketMat = new THREE.MeshToonMaterial({
-				color: 0xcccccc,
+				color: 0xaaaaaa,
 				shininess: 1
 			});
 
@@ -181,7 +181,7 @@
 			// window
 
 			var portalGeo = new THREE.CylinderBufferGeometry( 0.26, 0.26, 1.6, 32 );
-			var portalMat = new THREE.MeshToonMaterial({ color: 0x90dcff });
+			var portalMat = new THREE.MeshToonMaterial({ color: 0x79a3b5 });
 			var portalOutlineMat = rocketOutlineMat.clone();
 			portalOutlineMat.uniforms.offset.value = 0.03;
 			var portal = THREE.SceneUtils.createMultiMaterialObject(
@@ -208,10 +208,12 @@
 			var tubeGeo = new THREE.ExtrudeGeometry( circle, tubeExtrudeSettings );
 			tubeGeo.computeVertexNormals();
 			tubeGeo.center();
+
 			var tubeMat = new THREE.MeshToonMaterial({
-				color: 0xff0000,
+				color: 0x930000,
 				shininess: 1
 			});
+
 			var tubeOutlineMat = rocketOutlineMat.clone();
 			tubeOutlineMat.uniforms.offset.value = 0.2;
 			var tube = THREE.SceneUtils.createMultiMaterialObject(
@@ -251,15 +253,19 @@
 
 			var wingGeo = new THREE.ExtrudeGeometry( shape, extrudeSettings );
 			wingGeo.computeVertexNormals();
+
 			var wingMat = new THREE.MeshToonMaterial({
-				color: 0xff0000,
+				color: 0x930000,
 				shininess: 1,
 			});
+
 			var wingOutlineMat = rocketOutlineMat.clone();
 			wingOutlineMat.uniforms.offset.value = 1;
+
 			var wing = THREE.SceneUtils.createMultiMaterialObject(
 				wingGeo, [ wingMat, wingOutlineMat ]
 			);
+
 			wing.scale.setScalar( 0.03 );
 			wing.position.set( .6, 0.9, 0 );
 			wingGroup.add( wing );
@@ -326,6 +332,13 @@
 			var fire = new THREE.Mesh(fireGeo, fireMat);
 			fire.scale.setScalar( 0.06 );
 			rocket.add( fire );
+
+			var fireLight = new THREE.PointLight( 0xff7b00, 1, 9 );
+			fireLight.position.set( 0, -1, 0 );
+			rocket.add( fireLight );
+
+			// var fireLightHelper = new THREE.PointLightHelper( fireLight, 0.5 );
+			// scene.add( fireLightHelper );
 
 			var fireUpdate = function() {
 				fire.scale.y = THREE.Math.randFloat(0.04, 0.08);
