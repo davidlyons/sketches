@@ -65,27 +65,26 @@
 					alpha: { type: 'f', value: 1.0 }
 				},
 
-				vertexShader: [
+				vertexShader: /* glsl */ `
 
-					"uniform float offset;",
+					uniform float offset;
 
-					"void main() {",
-					"  vec4 pos = modelViewMatrix * vec4( position + normal * offset, 1.0 );",
-					"  gl_Position = projectionMatrix * pos;",
-					"}"
+					void main() {
+					  vec4 pos = modelViewMatrix * vec4( position + normal * offset, 1.0 );
+					  gl_Position = projectionMatrix * pos;
+					}
+				`,
 
-				].join('\n'),
+				fragmentShader:  /* glsl */  `
 
-				fragmentShader: [
+					uniform vec3 color;
+					uniform float alpha;
 
-					"uniform vec3 color;",
-					"uniform float alpha;",
+					void main() {
+					  gl_FragColor = vec4( color, alpha );
+					}
 
-					"void main() {",
-					"  gl_FragColor = vec4( color, alpha );",
-					"}"
-
-				].join('\n')
+				`
 
 			};
 
@@ -106,7 +105,7 @@
 			controls.enabled = false;
 
 			var scene = new THREE.Scene();
-			scene.background = new THREE.Color( 0x01374b );
+			scene.background = new THREE.Color( 0x00212d );
 			scene.fog = new THREE.Fog( scene.background, 10, 20 );
 
 			// lights
@@ -181,7 +180,7 @@
 			// window
 
 			var portalGeo = new THREE.CylinderBufferGeometry( 0.26, 0.26, 1.6, 32 );
-			var portalMat = new THREE.MeshToonMaterial({ color: 0x79a3b5 });
+			var portalMat = new THREE.MeshToonMaterial({ color: 0x016589 });
 			var portalOutlineMat = rocketOutlineMat.clone();
 			portalOutlineMat.uniforms.offset.value = 0.03;
 			var portal = THREE.SceneUtils.createMultiMaterialObject(
@@ -346,157 +345,167 @@
 
 			// -------------------------------------------
 
-
-			// fire particles / stars
+			// star particles
 
 			// https://aerotwist.com/tutorials/creating-particles-with-three-js/
 			// https://aerotwist.com/static/tutorials/creating-particles-with-three-js/demo/
 			// downloads/paul-lewis-aerotwist/particles-r88
 
-			var Particles = function( options ) {
+			var ParticleShader = {
 
-				var color = this.color = options.color || 0x333333;
-				var size = this.size = options.size || 0.4;
+				uniforms: {
 
-				var pointCount = this.pointCount = options.pointCount || 40; // 1800
-				var rangeV = this.rangeV = options.rangeV || 2; // 600
-				var rangeH = this.rangeH = options.rangeH || 1;
+					color:   { type: 'v3', value: new THREE.Color( 0x2a4a52 ) },
+					texture: { type: 't', value: null },
+					time:    { type: 'f', value: 0 },
+					size:    { type: 'f', value: 50.0 },
 
-				var speed = this.speed = this.speedTarget = options.speed || 0.0005;
+					// ShaderMaterial texture and fog: https://jsfiddle.net/2pha/h83py9gu/
+					fogColor:    { type: "c", value: scene.fog.color },
+					fogNear:     { type: "f", value: scene.fog.near },
+					fogFar:      { type: "f", value: scene.fog.far }
 
-				THREE.Group.call( this );
+				},
 
-				// circle texture
+				vertexShader: /* glsl */ `
+					uniform float time;
+					uniform float size;
+					attribute float alphaOffset;
+					varying float vAlpha;
+					uniform vec4 origin;
 
-				var canvas = document.createElement('canvas');
-				canvas.width = canvas.height = 128;
-				var ctx = canvas.getContext( '2d' );
+					void main() {
 
-				var centerX = canvas.width / 2;
-				var centerY = canvas.height / 2;
-				var radius = canvas.width / 3;
+						// vAlpha = 0.5 * ( 1.0 + sin( alphaOffset + time ) );
+						vAlpha = 0.9;
 
-				ctx.beginPath();
-				ctx.arc( centerX, centerY, radius, 0, 2 * Math.PI, false );
-				ctx.fillStyle = '#fff';
-				ctx.fill();
+						vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+						float cameraDist = distance( mvPosition, origin );
+						gl_PointSize = size / cameraDist;
+						gl_Position = projectionMatrix * mvPosition;
 
-				var texture = new THREE.Texture( canvas );
-				texture.premultiplyAlpha = true;
-				texture.needsUpdate = true;
+					}
+				`,
 
-				//
+				fragmentShader: /* glsl */ `
+					uniform float time;
+					uniform vec3 color;
 
-				var pointsGeo = new THREE.Geometry();
-				var pointsMat = new THREE.PointsMaterial({
-					color: color,
-					size: size,
-					map: texture,
-					transparent: true,
-					depthWrite: false
-				});
+					uniform vec3 fogColor;
+					uniform float fogNear;
+					uniform float fogFar;
 
-				for (var p = 0; p < pointCount; p++) {
+					varying float vAlpha;
 
-					var point = new THREE.Vector3(
-						THREE.Math.randFloatSpread( rangeH ),
-						THREE.Math.randFloatSpread( rangeV ),
-						THREE.Math.randFloatSpread( rangeH )
-					);
+					void main() {
+						vec2 center = gl_PointCoord - 0.5;
+						float dist = length(center);
+						float alpha = smoothstep(0.5, 0.1, dist) * vAlpha;
+						gl_FragColor = vec4( color, alpha );
 
-					point.velocity = new THREE.Vector3( 0, -Math.random() * speed * 100, 0);
+						#ifdef USE_FOG
+							#ifdef USE_LOGDEPTHBUF_EXT
+								float depth = gl_FragDepthEXT / gl_FragCoord.w;
+							#else
+								float depth = gl_FragCoord.z / gl_FragCoord.w;
+							#endif
 
-					pointsGeo.vertices.push( point );
-				}
+							float fogFactor = smoothstep( fogNear, fogFar, depth );
+							gl_FragColor.rgb = mix( gl_FragColor.rgb, fogColor, fogFactor );
+						#endif
+					}
+				`
+			};
 
-				var points = this.points = new THREE.Points( pointsGeo, pointsMat );
-				points.position.y = - rangeV / 2;
-				points.sortParticles = true;
+			class Particles extends THREE.Group {
 
-				this.add( points );
+				constructor( options ){
 
-			}
+					super();
 
-			Particles.prototype = Object.create( THREE.Group.prototype );
-			Particles.prototype.constructor = Particles;
+					var color = this.color = options.color || 0x2a4a52;
+					ParticleShader.uniforms.color.value.setHex( color ); // light pink
+					var size = this.size = options.size || 0.4;
 
-			Particles.prototype.update = function(){
-				// this.points.rotation.y -= 0.01; // 0.01
+					var pointCount = this.pointCount = options.pointCount || 40;
+					var range = this.range = options.range || new THREE.Vector3( 2, 2, 2 );
+					var speed = this.speed = this.speedTarget = options.speed || 0.0005;
 
-				var pCount = this.pointCount;
-				while ( pCount-- ) {
+					//
 
-					var point = this.points.geometry.vertices[pCount];
+					ParticleShader.uniforms.size.value = size;
 
-					// check if we need to reset
-					if ( point.y < - this.rangeV / 2 ) {
-						point.y = this.rangeV / 2;
-						point.velocity.y = 0;
+					var pointsMat = new THREE.ShaderMaterial( {
+						uniforms:       ParticleShader.uniforms,
+						vertexShader:   ParticleShader.vertexShader,
+						fragmentShader: ParticleShader.fragmentShader,
+						blending:       THREE.AdditiveBlending,
+						depthWrite:     false,
+						transparent:    true,
+						fog:            true,
+					});
+
+					var pointsGeo = new THREE.BufferGeometry();
+
+					var positions = new Float32Array( pointCount * 3 );
+					var alphas = new Float32Array( pointCount );
+
+					for ( var i = 0; i < pointCount; i++ ) {
+
+						positions[ i*3 + 0 ] = THREE.Math.randFloatSpread( range.x );
+						positions[ i*3 + 1 ] = THREE.Math.randFloatSpread( range.y );
+						positions[ i*3 + 2 ] = THREE.Math.randFloatSpread( range.z );
+
+						alphas[ i ] = i;
+
 					}
 
-					// update the velocity
-					point.velocity.y -= Math.random() * this.speed; // .1
+					pointsGeo.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+					pointsGeo.addAttribute( 'alphaOffset', new THREE.BufferAttribute( alphas, 1 ) );
 
-					// and the position
-					point.add( point.velocity );
+					var points = this.points = new THREE.Points( pointsGeo, pointsMat );
+					points.sortParticles = true;
+					points.renderOrder = 1;
+
+					this.add( points );
+
+					var box = new THREE.Box3();
+					box.setFromCenterAndSize( points.position, range );
+
+					// var boxHelper = new THREE.Box3Helper( box );
+					// this.add( boxHelper );
+
 				}
 
-				this.points.geometry.verticesNeedUpdate = true;
-			}
+				update() {
+					var array = this.points.geometry.attributes.position.array;
 
-			Particles.prototype.updateConstant = function(){
-				var pCount = this.pointCount;
-				while ( pCount-- ) {
+					for ( var i = 0; i < this.pointCount; i++ ) {
+						var indexY = i*3 + 1;
 
-					var point = this.points.geometry.vertices[pCount];
+						// check if we need to reset
+						if ( array[indexY] < - this.range.y / 2 ) {
+							array[indexY] = this.range.y / 2;
+						}
 
-					// check if we need to reset
-					if ( point.y < - this.rangeV / 2 ) {
-						point.y = this.rangeV / 2;
+						array[indexY] -= this.speed;
 					}
 
-					point.y -= this.speed;
+					this.points.geometry.attributes.position.needsUpdate = true;
 				}
 
-				this.points.geometry.verticesNeedUpdate = true;
 			}
 
-			// orange
-			// var fire = new Particles({
-			// 	color: 0xff5a00,
-			// 	size: 0.4,
-			// 	rangeH: 0.8,
-			// 	rangeV: 2.5,
-			// 	pointCount: 50
-			// });
-			// rocket.add( fire );
-
-			// yellow
-			// var fire2 = new Particles({
-			// 	color: 0xffc000,
-			// 	size: 0.6,
-			// 	rangeH: 0.5
-			// });
-			// rocket.add( fire2 );
-
-			// var box = new THREE.BoxHelper( fire.points );
-			// fire.add( box );
-
-			// -------------------------------------------
-
-			// stars
+			// ---------------------------------
 
 			var stars = new Particles({
 				color: 0xffffff,
-				size: 0.6,
-				rangeH: 20,
-				rangeV: 20,
-				pointCount: 400,
-				size: 0.2,
+				range: new THREE.Vector3( 30, 30, 30 ),
+				pointCount: 300,
+				size: 120,
 				speed: 0.1
 			});
 
-			stars.points.position.y = 0;
 			scene.add( stars );
 
 			// -------------------------------------------
@@ -607,11 +616,9 @@
 
 				rocketGroup.rotation.y = Math.cos( time * 8 ) * angle;
 
-				// fire.update();
-				// fire2.update();
 				fireUpdate();
 
-				stars.updateConstant();
+				stars.update();
 
 				lerp(rocketGroup.position, 'y', rocketTarget.y);
 				lerp(rocketGroup.position, 'x', rocketTarget.x);
