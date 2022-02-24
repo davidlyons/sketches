@@ -13,6 +13,8 @@
 
 		<title>Snake</title>
 
+		<link href="../../info.css" rel="stylesheet">
+
 		<style>
 			* { box-sizing: border-box; }
 
@@ -44,6 +46,20 @@
 		<div id="container"></div>
 
 		<script type="module" src="snake.js"></script>
+
+		<script src="../../info.js"></script>
+		<script>
+			var info = new Info(
+				'Snake',
+				[
+					'<a href="https://davidlyons.dev">David Lyons</a>',
+					'',
+					'Recreation of Hashim Goodsir\'s <a href="https://youtu.be/Y4OPAzs0GGs" target="_blank">Ventuz snake loop</a> in Three.js',
+					'',
+					'Scales texture maps from <a href="https://3dtextures.me/2021/04/05/stylized-scales-002/">3dtextures.me</a>',
+				].join('<br>')
+			);
+		</script>
 
 	</body>
 </html>
