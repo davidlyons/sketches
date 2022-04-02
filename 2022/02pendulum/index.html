@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Pendulum Watch</title>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        overflow: hidden;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        color: #ccc;
+        background: #000;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="container"></div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.skypack.dev/three@0.139.2"
+        }
+      }
+    </script>
+
+    <script type="module" src="pendulum.js"></script>
+  </body>
+</html>
