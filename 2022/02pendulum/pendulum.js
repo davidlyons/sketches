@@ -92,13 +92,17 @@ rgbeLoader.load('venice_sunset_1k.hdr', function (texture) {
 
 // animation
 
-const angle = 30;
+const angle = 10;
 
 pendulum.rotation.z = THREE.MathUtils.degToRad(-angle);
 
+const bpm = 137;
+
+const duration = (60 / bpm) * 1000; // one swing in milliseconds
+
 const tween = new TWEEN.Tween(pendulum.rotation)
-  .to({ z: THREE.MathUtils.degToRad(angle) }, 1200)
-  .easing(TWEEN.Easing.Quadratic.InOut)
+  .to({ z: THREE.MathUtils.degToRad(angle) }, duration)
+  .easing(TWEEN.Easing.Sinusoidal.InOut)
   .yoyo(true)
   .repeat(Infinity)
   .start();
