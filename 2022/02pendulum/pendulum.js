@@ -74,6 +74,7 @@ gltfLoader.setPath('models/pocket-watch1/');
 gltfLoader.load('scene.gltf', function (gltf) {
   const watch = gltf.scene;
   watch.getObjectByName('Circle005').visible = false;
+  // watch.getObjectByName('Circle004').visible = false;
   watch.rotation.y = -Math.PI / 2;
   // watch.add(new THREE.AxesHelper(1));
   watch.position.z = 0.6;
