@@ -74,8 +74,10 @@ var GradientShader = {
       // vec3 col = hsv2rgb( hsl );
 
       vec3 col = vec3(0.0);
-      // vec3 pct = sin(vec3(mod(vUv.x, 1.0) * PI)); // sine https://thebookofshaders.com/06/
-      vec3 pct = 1.0 - abs(vec3(mod(vUv.x, 1.0) - 0.5)) * 2.0; // linear https://thebookofshaders.com/05/kynd.png
+      // sine https://thebookofshaders.com/06/
+      // vec3 pct = sin(vec3(mod(vUv.x, 1.0) * PI));
+      // linear https://thebookofshaders.com/05/kynd.png
+      vec3 pct = 1.0 - abs(vec3(mod(vUv.x, 1.0) - 0.5)) * 2.0;
       col = mix(colorA, colorB, pct);
 
       gl_FragColor = vec4( col, 1.0 );
