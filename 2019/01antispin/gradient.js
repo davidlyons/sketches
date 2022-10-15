@@ -1,5 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r109/build/three.module.js';
-import { OrbitControls } from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r109/examples/jsm/controls/OrbitControls.js';
+// import { OrbitControls } from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r109/examples/jsm/controls/OrbitControls.js';
 import { TWEEN } from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r109/examples/jsm/libs/tween.module.min.js';
 
 const container = document.getElementById('container');
@@ -27,8 +27,8 @@ const camera = new THREE.OrthographicCamera(
 camera.position.set(0, 0, 5);
 scene.add(camera);
 
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.screenSpacePanning = true;
+// const controls = new OrbitControls(camera, renderer.domElement);
+// controls.screenSpacePanning = true;
 
 // -----------------------------------------------------------
 
@@ -268,7 +268,7 @@ renderer.setAnimationLoop(loop);
 
 function loop() {
   TWEEN.update();
-  controls.update();
+  // controls.update();
 
   var playhead = timeline.playhead;
 
