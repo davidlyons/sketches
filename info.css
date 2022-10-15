@@ -1,55 +1,55 @@
 /* info bottom left */
 
 #info {
-	text-align: left;
-	color: #fff;
-	position: absolute;
-	width: 240px;
-	padding: 15px;
-	background: rgba(0,0,0,0.2);
-	bottom: 50px;
-	left: 10px;
-	border-radius: 4px;
-	display: none;
+  text-align: left;
+  color: #fff;
+  position: absolute;
+  width: 240px;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.2);
+  bottom: 50px;
+  left: 10px;
+  border-radius: 4px;
+  display: none;
 }
 
 #info.visible {
-	display: block;
+  display: block;
 }
 
 #info h1 {
-	margin: 0 0 10px;
-	font-size: 20px;
-	font-weight: 700;
+  margin: 0 0 10px;
+  font-size: 20px;
+  font-weight: 700;
 }
 
 #info a {
-	color: #fc0;
+  color: #1ac6ff;
+  transition: color 0.15s ease-in-out;
 }
 
 #info a:hover,
 #info a:focus {
-	color: #fc0;
-	text-decoration: underline;
+  color: #81dfff;
 }
 
 #info-icon {
-	position: absolute;
-	left: 10px;
-	bottom: 10px;
-	background: rgba(0,0,0,0.3);
-	width: 30px;
-	height: 30px;
-	font-weight: bold;
-	text-align: center;
-	line-height: 30px;
-	color: #fff;
-	font-family: monospace;
-	font-size: 16px;
-	border-radius: 4px;
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  background: rgba(0, 0, 0, 0.3);
+  width: 30px;
+  height: 30px;
+  font-weight: bold;
+  text-align: center;
+  line-height: 30px;
+  color: #fff;
+  font-family: monospace;
+  font-size: 16px;
+  border-radius: 4px;
 }
 
 #info-icon:hover {
-	cursor: pointer;
-	background: rgba(0,0,0,0.4);
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.4);
 }
