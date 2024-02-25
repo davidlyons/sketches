@@ -498,11 +498,17 @@
 
 			// ---------------------------------
 
+			// scale particles based on window height so they are the same size on different sized windows
+			function getParticleSize() {
+				var size = 120 * (window.innerHeight / 919);
+				return Math.max(size, 25);
+			}
+
 			var stars = new Particles({
 				color: 0xffffff,
 				range: new THREE.Vector3( 30, 30, 30 ),
 				pointCount: 320,
-				size: 120,
+				size: getParticleSize(),
 				speed: 0.1
 			});
 
@@ -596,6 +602,8 @@
 			window.addEventListener( 'resize', resize, false );
 
 			function resize() {
+				stars.size = ParticleShader.uniforms.size.value = getParticleSize();
+
 				camera.aspect = window.innerWidth / window.innerHeight;
 				camera.updateProjectionMatrix();
 				renderer.setSize( window.innerWidth, window.innerHeight );

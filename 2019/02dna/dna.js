@@ -406,11 +406,17 @@ class Particles extends THREE.Group {
 
 // ---------------------------------
 
+// scale particles based on window height so they are the same size on different sized windows
+function getParticleSize() {
+  var size = 400 * (window.innerHeight / 919);
+  return Math.max(size, 150);
+}
+
 var particles = new Particles({
   color: 0xffffff,
   range: new THREE.Vector3( 50, 50, 50 ),
   pointCount: 200,
-  size: 400,
+  size: getParticleSize(),
   speed: 0.1
 });
 
@@ -433,6 +439,8 @@ var tween1 = new TWEEN.Tween( timeline )
 
 window.addEventListener( 'resize', resize, false );
 function resize() {
+  particles.size = ParticleShader.uniforms.size.value = getParticleSize();
+
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize( window.innerWidth, window.innerHeight );
