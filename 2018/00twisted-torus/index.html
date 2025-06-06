@@ -40,8 +40,8 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "https://unpkg.com/three@0.162.0/build/three.module.js",
-          "three/addons/": "https://unpkg.com/three@0.162.0/examples/jsm/",
+          "three": "https://unpkg.com/three@0.177.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.177.0/examples/jsm/",
           "jpalette": "https://unpkg.com/jpalette@1.0.4/src/index.js"
         }
       }
@@ -52,9 +52,6 @@
       import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
       import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
       import * as jPalette from 'jpalette';
-      // import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
-
-      // const gui = new GUI();
 
       const container = document.getElementById('container');
 
@@ -89,21 +86,19 @@
 
       class Ring extends THREE.Group {
         // options: numBoxes, multiplier, colors
-        constructor(options) {
-          super();
-
-          const scope = this;
-
-          options = options || {};
-
-          const numBoxes = options.numBoxes || 70;
-
-          const colors = options.colors || [
+        constructor({
+          numBoxes = 70,
+          multiplier = 1,
+          colors = [
             new jPalette.Color(150, 77, 218, 255), // purple
             new jPalette.Color(63, 123, 213, 255), // blue
             new jPalette.Color(212, 86, 214, 255), // pink
             new jPalette.Color(150, 77, 218, 255), // purple
-          ];
+          ],
+        } = {}) {
+          super();
+
+          const scope = this;
 
           const colorPalette = new jPalette.ColorMap(numBoxes, colors);
 
@@ -129,7 +124,6 @@
             const box = new THREE.Mesh(boxGeo, material);
             boxParent.add(box);
 
-            const multiplier = options.multiplier || 1;
             box.rotation.x = -angle * multiplier;
 
             scope.add(boxParent);
@@ -175,36 +169,14 @@
           if (INTERSECTED != intersects[0].object) {
             if (INTERSECTED) {
               INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
-
-              // INTERSECTED.scale.setScalar(1);
-
-              // for ( let i = 0; i < ring.boxes; i++ ) {
-              // 	ring.boxes[i].scale.setScalar(1);
-              // }
             }
             INTERSECTED = intersects[0].object;
             INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
             INTERSECTED.material.emissive.setHex(0xff0000);
-
-            // INTERSECTED.scale.setScalar(1.1);
-
-            // const index = ring.boxes.indexOf( INTERSECTED );
-            // const range = 8;
-            // for (let i = 1; i < range; i++) {
-            // 	const s = 1 + (.4 * 1 - i/range);
-            // 	ring.boxes[mod(index+i,ring.boxes.length)].scale.setScalar(s);
-            // 	ring.boxes[mod(index-i,ring.boxes.length)].scale.setScalar(s);
-            // }
           }
         } else {
           if (INTERSECTED) {
             INTERSECTED.material.emissive.setHex(INTERSECTED.currentHex);
-
-            // INTERSECTED.scale.setScalar(1);
-
-            // for ( let i = 0; i < ring.boxes; i++ ) {
-            // 	ring.boxes[i].scale.setScalar(1);
-            // }
           }
           INTERSECTED = null;
         }
@@ -240,13 +212,6 @@
         }
 
         renderer.render(scene, camera);
-      }
-
-      function mod(v, l) {
-        while (v < 0) {
-          v += l;
-        }
-        return v % l;
       }
     </script>
   </body>

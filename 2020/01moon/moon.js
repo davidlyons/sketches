@@ -1,13 +1,14 @@
-import * as THREE from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r112/build/three.module.js';
-import { OrbitControls } from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r112/examples/jsm/controls/OrbitControls.js';
-import { GUI } from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r112/examples/jsm/libs/dat.gui.module.js';
-import { TWEEN } from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r112/examples/jsm/libs/tween.module.min.js';
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GUI } from 'lil-gui';
+import TWEEN from 'three/addons/libs/tween.module.js';
 
-import { gsap } from 'https://cdn.jsdelivr.net/gh/greensock/GSAP/esm/gsap-core.js';
+import { gsap } from 'gsap';
 
-import { EffectComposer } from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r112/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r112/examples/jsm/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r112/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const container = document.getElementById('container');
 
@@ -53,7 +54,7 @@ scene.add(dLight);
 
 const textureLoader = new THREE.TextureLoader();
 
-const moonGeo = new THREE.SphereBufferGeometry(0.27, 64, 64);
+const moonGeo = new THREE.SphereGeometry(0.27, 64, 64);
 const moonMat = new THREE.MeshPhongMaterial({
   map: textureLoader.load('moon.jpg'),
   // color: 0xffbf00, // orange?
@@ -77,21 +78,12 @@ gui.add(moon.rotation, 'y', -Math.PI, Math.PI);
 var composer = new EffectComposer(renderer);
 
 var renderPass = new RenderPass(scene, camera);
-composer.addPass(renderPass);
-
-// var bloomPass = new BloomPass();
-// composer.addPass( bloomPass );
 
 var params = {
-  // exposure: 1,
-  // bloomStrength: 1.5,
-  // bloomThreshold: 0,
-  // bloomRadius: 0,
-
-  exposure: 0.7581078752369463,
-  bloomStrength: 1.8331897294502841,
+  exposure: 1,
+  bloomStrength: 1,
   bloomThreshold: 0,
-  bloomRadius: 0.68,
+  bloomRadius: 0,
 
   log() {
     var str = `
@@ -109,7 +101,13 @@ renderer.toneMappingExposure = Math.pow(params.exposure, 4.0);
 bloomPass.threshold = params.bloomThreshold;
 bloomPass.strength = params.bloomStrength;
 bloomPass.radius = params.bloomRadius;
+
+const outputPass = new OutputPass();
+
+composer = new EffectComposer(renderer);
+composer.addPass(renderPass);
 composer.addPass(bloomPass);
+composer.addPass(outputPass);
 
 var f1 = gui.addFolder('bloom');
 f1.open();
