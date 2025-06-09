@@ -1,182 +1,193 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<!-- Global site tag (gtag.js) - Google Analytics -->
-		<script async src="https://www.googletagmanager.com/gtag/js?id=G-WTY198QNED"></script>
-		<script src="../../ga.js"></script>
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WTY198QNED"></script>
+    <script src="../../ga.js"></script>
 
-		<meta charset="utf-8">
-		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<meta name="description" content="">
-		<meta name="author" content="">
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
 
-		<title>Fibonacci Galaxy</title>
+    <title>Fibonacci Galaxy</title>
 
-		<link href="../../info.css" rel="stylesheet">
-		
-		<style>
-			html {
-				overflow: hidden;
-			}
+    <link href="../../info.css" rel="stylesheet" />
 
-			body {
-				margin: 0;
-				padding: 0;
-				overflow: hidden;
-				font-family: Arial, sans-serif;
-				font-size: 13px;
-				line-height: 20px;
-				color: #fff;
-				background: #111;
-			}
-		</style>
+    <style>
+      html {
+        overflow: hidden;
+      }
 
-	</head>
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+        font-size: 13px;
+        line-height: 20px;
+        color: #fff;
+        background: #111;
+      }
+    </style>
+  </head>
 
-	<body>
+  <body>
+    <div id="container"></div>
 
-		<div id="container"></div>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/"
+        }
+      }
+    </script>
 
-		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/build/three.js"></script>
-		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/controls/OrbitControls.js"></script>
-		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/Detector.js"></script>
+    <script src="../../info.js"></script>
 
-		<script src="../../info.js"></script>
+    <script type="module">
+      import * as THREE from 'three';
+      import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-		<script>
+      var info = new Info(
+        'Fibonacci Galaxy',
+        ['Codevember 2017, Day 1', '2 Fibonacci Spirals', '<a href="https://davidlyons.dev">David Lyons</a>'].join(
+          '<br>'
+        )
+      );
 
-			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+      var container = document.getElementById('container');
 
-			var info = new Info(
-				'Fibonacci Galaxy',
-				['Codevember 2017, Day 1',
-				 '2 Fibonacci Spirals',
-				 '<a href="https://davidlyons.dev">David Lyons</a>'].join('<br>')
-			);
+      var renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setClearColor(0x111111, 1);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
 
-			var container = document.getElementById( 'container' );
+      var camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 100000);
+      camera.position.set(0, 0, 300);
+      // camera.position.set( 5.572598712768517, -66.57502631633189, 21.02674031080701 );
+      // camera.rotation.set( 1.2322882126233607, 0.07273216646669994, -0.203550046101327 );
 
-			var renderer = new THREE.WebGLRenderer( { antialias: true } );
-			renderer.setClearColor( 0x111111, 1 );
-			renderer.setPixelRatio( window.devicePixelRatio );
-			renderer.setSize( window.innerWidth, window.innerHeight );
+      var controls = new OrbitControls(camera, renderer.domElement);
+      controls.target.set(0.5518566227733895, -0.7508918311572805, -2.2539378789116693);
+      controls.update();
+      // controls.enabled = false;
 
-			var camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 100000 );
-			camera.position.set( 0, 0, 300 );
-			// camera.position.set( 5.572598712768517, -66.57502631633189, 21.02674031080701 );
-			// camera.rotation.set( 1.2322882126233607, 0.07273216646669994, -0.203550046101327 );
+      var scene = new THREE.Scene();
 
-			var controls = new THREE.OrbitControls( camera, renderer.domElement );
-			controls.target.set( 0.5518566227733895, -0.7508918311572805, -2.2539378789116693 );
-			controls.update();
-			// controls.enabled = false;
+      // helper = new THREE.GridHelper( 80, 20, 0x000000, 0x808080 );
+      // helper.rotation.x = Math.PI / 2;
+      // scene.add( helper );
 
-			var scene = new THREE.Scene();
+      container.appendChild(renderer.domElement);
 
-			// helper = new THREE.GridHelper( 80, 20, 0x000000, 0x808080 );
-			// helper.rotation.x = Math.PI / 2;
-			// scene.add( helper );
+      //
 
-			container.appendChild( renderer.domElement );
+      var outerSpiralGroup = (window.outerSpiralGroup = new THREE.Group());
+      scene.add(outerSpiralGroup);
 
-			//
+      var spiralGroup = new THREE.Group();
+      outerSpiralGroup.add(spiralGroup);
 
-			var outerSpiralGroup = window.outerSpiralGroup = new THREE.Group();
-			scene.add( outerSpiralGroup );
+      var spheres = new THREE.Group();
+      // spiralGroup.add( spheres );
 
-			var spiralGroup = new THREE.Group();
-			outerSpiralGroup.add( spiralGroup );
+      var sphereMat = (window.mat = new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+      var sphereGeo = new THREE.SphereGeometry(0.25);
+      var sphere = new THREE.Mesh(sphereGeo, sphereMat.clone());
+      spheres.add(sphere);
 
-			var spheres = new THREE.Group();
-			// spiralGroup.add( spheres );
+      // var fib = [ 0, 1, 1, 2, 3, 5, 8, 13, 21, 34 ];
+      var fib = [0, 1];
+      for (var i = 2; i < 20; i++) {
+        fib.push(fib[i - 1] + fib[i - 2]);
+      }
 
-			var sphereMat = window.mat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-			var sphereGeo = new THREE.SphereBufferGeometry( 0.25 );
-			var sphere = new THREE.Mesh( sphereGeo, sphereMat.clone() );
-			spheres.add( sphere );
+      // counter clockwise
+      // se, ne, nw, sw
+      var directions = [
+        [1, -1],
+        [1, 1],
+        [-1, 1],
+        [-1, -1],
+      ];
 
-			// var fib = [ 0, 1, 1, 2, 3, 5, 8, 13, 21, 34 ];
-			var fib = [ 0, 1 ];
-			for ( var i = 2; i < 20; i++ ) {
-				fib.push( fib[i-1] + fib[i-2] );
-			}
+      var cpDirections = [
+        [-1, 0],
+        [0, -1],
+        [1, 0],
+        [0, 1],
+      ];
 
-			// counter clockwise
-			// se, ne, nw, sw
-			var directions = [ [1,-1], [1,1], [-1,1], [-1,-1] ];
+      var fibShape = new THREE.Shape();
+      fibShape.moveTo(0, 0);
 
-			var cpDirections = [ [-1,0], [0,-1], [1,0], [0,1] ];
+      for (var i = 1; i < fib.length; i++) {
+        var size = fib[i];
+        var prevSphere = spheres.children[i - 1];
+        var dir = directions[i % 4];
+        var x = prevSphere.position.x + size * dir[0];
+        var y = prevSphere.position.y + size * dir[1];
+        var sphere = new THREE.Mesh(sphereGeo, sphereMat.clone());
+        sphere.material.color.setHSL(i / fib.length, 1, 0.5);
+        sphere.position.set(x, y, 0);
+        spheres.add(sphere);
 
-			var fibShape = new THREE.Shape();
-			fibShape.moveTo( 0, 0 );
+        // // not what I was going for, but looks cool
+        // fibShape.quadraticCurveTo( x, y, x*2, y*2 );
 
-			for ( var i = 1; i < fib.length; i++ ) {
-				var size = fib[i];
-				var prevSphere = spheres.children[i-1];
-				var dir = directions[i%4];
-				var x = prevSphere.position.x + size * dir[0];
-				var y = prevSphere.position.y + size * dir[1];
-				var sphere = new THREE.Mesh( sphereGeo, sphereMat.clone() );
-				sphere.material.color.setHSL( i / fib.length, 1, 0.5 );
-				sphere.position.set( x, y, 0 );
-				spheres.add( sphere );
+        // todo: could use fibShape.arc instead?
+        // https://threejs.org/docs/index.html#api/extras/core/Path.arc
 
-				// // not what I was going for, but looks cool
-				// fibShape.quadraticCurveTo( x, y, x*2, y*2 );
+        var cpDir = cpDirections[i % 4];
+        var cpX = x + size * cpDir[0];
+        var cpY = y + size * cpDir[1];
+        fibShape.quadraticCurveTo(cpX, cpY, x, y);
+      }
 
-				// todo: could use fibShape.arc instead?
-				// https://threejs.org/docs/index.html#api/extras/core/Path.arc
+      var linePoints = fibShape.getPoints();
+      // var linePoints = fibShape.getSpacedPoints( 50 );
+      var lineGeo = new THREE.BufferGeometry().setFromPoints(linePoints);
+      var lineMat = new THREE.LineBasicMaterial({
+        color: 0xffffff,
+        linewidth: 3,
+      });
+      var line = new THREE.Line(lineGeo, lineMat);
+      spiralGroup.add(line);
 
-				var cpDir = cpDirections[i%4];
-				var cpX = x + size * cpDir[0];
-				var cpY = y + size * cpDir[1];
-				fibShape.quadraticCurveTo( cpX, cpY, x, y );
-			}
+      var spiralGroup2 = spiralGroup.clone();
+      spiralGroup2.rotation.z = Math.PI;
+      outerSpiralGroup.add(spiralGroup2);
 
-			var linePoints = fibShape.getPoints();
-			// var linePoints = fibShape.getSpacedPoints( 50 );
-			var lineGeo = new THREE.BufferGeometry().setFromPoints( linePoints );
-			var lineMat = new THREE.LineBasicMaterial({
-				color: 0xffffff,
-				linewidth: 3
-			});
-			var line = new THREE.Line( lineGeo, lineMat );
-			spiralGroup.add( line );
+      //
 
-			var spiralGroup2 = spiralGroup.clone();
-			spiralGroup2.rotation.z = Math.PI;
-			outerSpiralGroup.add( spiralGroup2 );
+      // var curvePath = new THREE.CurvePath();
+      // curvePath.curves = fibShape.curves;
+      // var tubeGeo = new THREE.TubeBufferGeometry( curvePath );
+      // var tubeMat = new THREE.MeshNormalMaterial();
+      // var tube = new THREE.Mesh( tubeGeo, tubeMat );
+      // scene.add( tube );
 
-			//
+      //
 
-			// var curvePath = new THREE.CurvePath();
-			// curvePath.curves = fibShape.curves;
-			// var tubeGeo = new THREE.TubeBufferGeometry( curvePath );
-			// var tubeMat = new THREE.MeshNormalMaterial();
-			// var tube = new THREE.Mesh( tubeGeo, tubeMat );
-			// scene.add( tube );
+      window.addEventListener('resize', resize, false);
 
-			//
+      function resize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
 
-			window.addEventListener( 'resize', resize, false );
+      loop();
 
-			function resize() {
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-				renderer.setSize( window.innerWidth, window.innerHeight );
-			}
-
-			loop();
-
-			function loop() {
-				requestAnimationFrame( loop );
-				controls.update();
-				outerSpiralGroup.rotation.z -= 0.05;
-				renderer.render( scene, camera );
-			}
-
-		</script>
-
-	</body>
+      function loop() {
+        requestAnimationFrame(loop);
+        controls.update();
+        outerSpiralGroup.rotation.z -= 0.05;
+        renderer.render(scene, camera);
+      }
+    </script>
+  </body>
 </html>

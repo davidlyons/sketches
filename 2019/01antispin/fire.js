@@ -1,14 +1,13 @@
+import * as THREE from 'three';
+// import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import TWEEN from 'three/addons/libs/tween.module.js';
 
-import * as THREE from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r109/build/three.module.js';
-import { OrbitControls } from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r109/examples/jsm/controls/OrbitControls.js';
-import { TWEEN } from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r109/examples/jsm/libs/tween.module.min.js';
-
-const container = document.getElementById( 'container' );
+const container = document.getElementById('container');
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio( window.devicePixelRatio );
-renderer.setSize( window.innerWidth, window.innerHeight );
-container.appendChild( renderer.domElement );
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+container.appendChild(renderer.domElement);
 
 renderer.setClearColor('#210C47', 1);
 
@@ -18,14 +17,15 @@ var aspect = window.innerWidth / window.innerHeight;
 var frustumSize = 2.2;
 
 const camera = new THREE.OrthographicCamera(
-  - frustumSize * aspect,
+  -frustumSize * aspect,
   frustumSize * aspect,
   frustumSize,
-  - frustumSize,
-  1, 1000
+  -frustumSize,
+  1,
+  1000
 );
-camera.position.set( 0, 0, 5 );
-scene.add( camera );
+camera.position.set(0, 0, 5);
+scene.add(camera);
 
 // const controls = new OrbitControls( camera, renderer.domElement );
 // controls.screenSpacePanning = true;
@@ -33,9 +33,8 @@ scene.add( camera );
 // -----------------------------------------------------------
 
 var GradientShader = {
-
   uniforms: {
-    time: { type: "f", value: 1.0 }
+    time: { type: 'f', value: 1.0 },
   },
 
   vertexShader: /* glsl */ `
@@ -67,15 +66,14 @@ var GradientShader = {
 
       gl_FragColor = vec4( col, 1.0 );
     }
-  `
+  `,
 };
 
 var OutlineShader = {
-
   uniforms: {
     offset: { type: 'f', value: 0.03 },
     color: { type: 'v3', value: new THREE.Color('#ff2a1f') },
-    alpha: { type: 'f', value: 1.0 }
+    alpha: { type: 'f', value: 1.0 },
   },
 
   vertexShader: /* glsl */ `
@@ -94,22 +92,21 @@ var OutlineShader = {
     void main() {
       gl_FragColor = vec4( color, alpha );
     }
-  `
+  `,
 };
 
 // ----------------------------------------------------------
 
 // https://2pha.com/demos/threejs/shaders/2_color_fresnel.html
 
-var fresnelMat = new THREE.ShaderMaterial( {
-
+var fresnelMat = new THREE.ShaderMaterial({
   uniforms: {
-    color1: { type: "c", value: new THREE.Color( 0xff5800 ) }, // edge
-    color2: { type: "c", value: new THREE.Color( 0xffea59 ) }, // base
-    alpha: { type: "f", value: 1.0 },
-    fresnelBias: { type: "f", value: 0.1 },
-    fresnelScale: { type: "f", value: 1.0 },
-    fresnelPower: { type: 'f', value: 1.5 }
+    color1: { type: 'c', value: new THREE.Color(0xff5800) }, // edge
+    color2: { type: 'c', value: new THREE.Color(0xffea59) }, // base
+    alpha: { type: 'f', value: 1.0 },
+    fresnelBias: { type: 'f', value: 0.1 },
+    fresnelScale: { type: 'f', value: 1.0 },
+    fresnelPower: { type: 'f', value: 1.5 },
   },
 
   vertexShader: /* glsl */ `
@@ -146,37 +143,37 @@ var fresnelMat = new THREE.ShaderMaterial( {
   `,
   // wireframe: true,
   transparent: true,
-} );
+});
 
 // ----------------------------------------------------------
 
 var outlineMat = new THREE.ShaderMaterial({
-  uniforms: THREE.UniformsUtils.clone( OutlineShader.uniforms ),
+  uniforms: THREE.UniformsUtils.clone(OutlineShader.uniforms),
   vertexShader: OutlineShader.vertexShader,
   fragmentShader: OutlineShader.fragmentShader,
   side: THREE.BackSide,
-  transparent: true
+  transparent: true,
 });
 
 // ----------------------------------------------------------
 
 // outer circle
 
-const torusGeo = new THREE.TorusGeometry( 1.13, .12, 16, 100 );
+const torusGeo = new THREE.TorusGeometry(1.13, 0.12, 16, 100);
 
 const rainbowMat = new THREE.ShaderMaterial({
-  uniforms: THREE.UniformsUtils.clone( GradientShader.uniforms ),
+  uniforms: THREE.UniformsUtils.clone(GradientShader.uniforms),
   vertexShader: GradientShader.vertexShader,
   fragmentShader: GradientShader.fragmentShader,
   // wireframe: true
 });
 
-const torus = new THREE.Mesh( torusGeo, fresnelMat );
+const torus = new THREE.Mesh(torusGeo, fresnelMat);
 torus.rotation.z = Math.PI / 2;
-scene.add( torus );
+scene.add(torus);
 
-var torusOutline = new THREE.Mesh( torusGeo, outlineMat );
-torus.add( torusOutline );
+var torusOutline = new THREE.Mesh(torusGeo, outlineMat);
+torus.add(torusOutline);
 
 // ----------------------------------------------------------
 
@@ -186,53 +183,47 @@ var options = {
   armTurns: 1,
   poiTurns: -5,
   armLength: 1,
-  poiLength: 0.55
+  poiLength: 0.55,
 };
 
 class FlowerCurve extends THREE.Curve {
-
-  constructor( scale ) {
-
-    super( scale );
-    this.scale = ( scale === undefined ) ? 1 : scale;
-
+  constructor(scale) {
+    super(scale);
+    this.scale = scale === undefined ? 1 : scale;
   }
 
-  getPoint ( t, target ) {
-
-    var { armTurns,	poiTurns,	armLength, poiLength } = options;
+  getPoint(t, target) {
+    var { armTurns, poiTurns, armLength, poiLength } = options;
 
     var theta1 = t * armTurns * Math.PI * 2 + Math.PI / 2;
     var theta2 = t * poiTurns * Math.PI * 2 + Math.PI / 2;
 
-    var tx = ( Math.cos( theta1 ) * armLength ) + ( Math.cos( theta2 ) * poiLength );
-    var ty = ( Math.sin( theta1 ) * armLength ) + ( Math.sin( theta2 ) * poiLength );
-    var tz = 1.4 * Math.sin( t * Math.PI * 12 );
+    var tx = Math.cos(theta1) * armLength + Math.cos(theta2) * poiLength;
+    var ty = Math.sin(theta1) * armLength + Math.sin(theta2) * poiLength;
+    var tz = 1.4 * Math.sin(t * Math.PI * 12);
 
-    var point = new THREE.Vector3( tx, ty, tz ).multiplyScalar( this.scale );
+    var point = new THREE.Vector3(tx, ty, tz).multiplyScalar(this.scale);
 
-    if ( target ) target.copy( point );
-    
+    if (target) target.copy(point);
+
     return point;
-
   }
-
 }
 
-var path = new FlowerCurve( 1 );
-var tubeGeo = new THREE.TubeGeometry( path, 300, .14, 32, false );
+var path = new FlowerCurve(1);
+var tubeGeo = new THREE.TubeGeometry(path, 300, 0.14, 32, false);
 
-var antispinMesh = new THREE.Mesh( tubeGeo, fresnelMat );
-scene.add( antispinMesh );
+var antispinMesh = new THREE.Mesh(tubeGeo, fresnelMat);
+scene.add(antispinMesh);
 
-var outlineMesh = new THREE.Mesh( tubeGeo, outlineMat );
-antispinMesh.add( outlineMesh );
+var outlineMesh = new THREE.Mesh(tubeGeo, outlineMat);
+antispinMesh.add(outlineMesh);
 
 // ----------------------------------------------------------
 
 // 3 moving poi
 
-var poiGeo = new THREE.SphereBufferGeometry( 0.2, 32, 32 );
+var poiGeo = new THREE.SphereGeometry(0.2, 32, 32);
 var poiMat = new THREE.MeshBasicMaterial({
   color: 0xfffef6,
   // transparent: true,
@@ -241,14 +232,14 @@ var poiMat = new THREE.MeshBasicMaterial({
 
 var spheres = [];
 
-for ( var i = 0; i < 3; i++ ) {
-  var poi = new THREE.Mesh( poiGeo, fresnelMat );
+for (var i = 0; i < 3; i++) {
+  var poi = new THREE.Mesh(poiGeo, fresnelMat);
 
-  var poiOutline = new THREE.Mesh( poiGeo, outlineMat );
-  poi.add( poiOutline );
+  var poiOutline = new THREE.Mesh(poiGeo, outlineMat);
+  poi.add(poiOutline);
 
-  scene.add( poi );
-  spheres.push( poi );
+  scene.add(poi);
+  spheres.push(poi);
 }
 
 // ----------------------------------------------------------
@@ -261,59 +252,59 @@ var width = 0.008;
 
 var seedGroup = new THREE.Group();
 seedGroup.position.z = -2;
-scene.add( seedGroup );
+scene.add(seedGroup);
 
-var circleGeo = new THREE.RingBufferGeometry( radius-width, radius+width, 64 );
+var circleGeo = new THREE.RingGeometry(radius - width, radius + width, 64);
 var circleMat = new THREE.MeshBasicMaterial({
   color: 0xcccccc,
   side: THREE.DoubleSide,
   transparent: true,
-  opacity: 0.1
+  opacity: 0.1,
 });
 
-var circle = new THREE.Mesh( circleGeo, circleMat );
-seedGroup.add( circle );
+var circle = new THREE.Mesh(circleGeo, circleMat);
+seedGroup.add(circle);
 
 // create and position all of the outer circles
 
-for ( var j = 0; j < 6; j++ ) {
+for (var j = 0; j < 6; j++) {
   var c = circle.clone();
-  var angle = j / 6 * 2 * Math.PI + ( Math.PI / 6 );
-  c.position.x = Math.cos( angle );
-  c.position.y = Math.sin( angle );
-  seedGroup.add( c );
+  var angle = (j / 6) * 2 * Math.PI + Math.PI / 6;
+  c.position.x = Math.cos(angle);
+  c.position.y = Math.sin(angle);
+  seedGroup.add(c);
 }
 
 // ---------------------------------------------------------
 
 var timeline = {
-  playhead: 0
-}
+  playhead: 0,
+};
 
-var tween1 = new TWEEN.Tween( timeline )
-.to( { playhead: 1 }, 1000 * 20 )
-.easing( TWEEN.Easing.Linear.None )
-.repeat( Infinity )
-.start();
+var tween1 = new TWEEN.Tween(timeline)
+  .to({ playhead: 1 }, 1000 * 20)
+  .easing(TWEEN.Easing.Linear.None)
+  .repeat(Infinity)
+  .start();
 
 // ---------------------------------------------------------
 
-window.addEventListener( 'resize', resize, false );
+window.addEventListener('resize', resize, false);
 function resize() {
   // ortho
   aspect = window.innerWidth / window.innerHeight;
-  renderer.setSize( window.innerWidth, window.innerHeight );
+  renderer.setSize(window.innerWidth, window.innerHeight);
 
-  camera.left = - frustumSize * aspect;
+  camera.left = -frustumSize * aspect;
   camera.right = frustumSize * aspect;
   camera.top = frustumSize;
-  camera.bottom = - frustumSize;
+  camera.bottom = -frustumSize;
   camera.updateProjectionMatrix();
 }
 
 // ---------------------------------------------------------
 
-renderer.setAnimationLoop( loop );
+renderer.setAnimationLoop(loop);
 
 function loop() {
   TWEEN.update();
@@ -323,9 +314,9 @@ function loop() {
 
   rainbowMat.uniforms.time.value = playhead;
 
-  for ( var i = 0; i < spheres.length; i++ ) {
+  for (var i = 0; i < spheres.length; i++) {
     var t = playhead * 2 + i / spheres.length;
-    path.getPoint( t, spheres[i].position );
+    path.getPoint(t, spheres[i].position);
   }
 
   renderer.render(scene, camera);

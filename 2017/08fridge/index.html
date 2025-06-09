@@ -40,16 +40,22 @@
   <body>
     <div id="container"></div>
 
-    <script src="https://cdn.rawgit.com/mrdoob/three.js/r89/build/three.js"></script>
-    <script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/Detector.js"></script>
-    <script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/loaders/FBXLoader.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.1.1/Tween.min.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/"
+        }
+      }
+    </script>
 
     <script src="../../info.js"></script>
 
-    <script>
-      if (!Detector.webgl) Detector.addGetWebGLMessage();
+    <script type="module">
+      import * as THREE from 'three';
+      import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+      import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+      import TWEEN from 'three/addons/libs/tween.module.js';
 
       var info = new Info(
         'Fridge',
@@ -63,16 +69,20 @@
           offset: { type: 'f', value: 0.01 },
         },
 
-        vertexShader: [
-          'uniform float offset;',
+        vertexShader: `
+          uniform float offset;
 
-          'void main() {',
-          '  vec4 pos = modelViewMatrix * vec4( position + normal * offset, 1.0 );',
-          '  gl_Position = projectionMatrix * pos;',
-          '}',
-        ].join('\n'),
+          void main() {
+            vec4 pos = modelViewMatrix * vec4( position + normal * offset, 1.0 );
+            gl_Position = projectionMatrix * pos;
+          }
+        `,
 
-        fragmentShader: ['void main() {', '  gl_FragColor = vec4( 0.0, 0.0, 0.0, 1.0 );', '}'].join('\n'),
+        fragmentShader: `
+          void main() {
+            gl_FragColor = vec4( 0.0, 0.0, 0.0, 1.0 );
+          }
+        `,
       };
 
       // -----------------------------------------------------------------
@@ -88,7 +98,7 @@
       var camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 100000);
       camera.position.set(-2.0, 2.6, 3.5);
 
-      var controls = new THREE.OrbitControls(camera, renderer.domElement);
+      var controls = new OrbitControls(camera, renderer.domElement);
       controls.target.y = 0.9;
       controls.update();
       controls.enabled = false;
@@ -98,7 +108,7 @@
       var aLight = new THREE.AmbientLight(0x404040);
       scene.add(aLight);
 
-      var dLight = new THREE.DirectionalLight(0xffffff, 0.6);
+      var dLight = new THREE.DirectionalLight(0xffffff, 2.5);
       dLight.position.set(0.1, 0.7, 1);
       scene.add(dLight);
 
@@ -110,12 +120,10 @@
 
       //
 
-      var fbxLoader = new THREE.FBXLoader();
+      var fbxLoader = new FBXLoader();
 
       // var path = 'https://cdn.rawgit.com/davidlyons/codevember17/v1/08fridge/';
-      fbxLoader.load('model/fridge.fbx', function (fbx) {
-        var fridgeGroup = fbx.children[0];
-
+      fbxLoader.load('model/fridge.fbx', function (fridgeGroup) {
         var back = fridgeGroup.getObjectByName('back');
         var topDoor = fridgeGroup.getObjectByName('topDoor');
         var bottomDoor = fridgeGroup.getObjectByName('bottomDoor');
@@ -126,13 +134,10 @@
 
         var fridgeMat = new THREE.MeshToonMaterial({
           color: 0xcccccc,
-          shininess: 1,
-          specular: 0xcccccc,
         });
 
         var handleMat = new THREE.MeshToonMaterial({
           color: 0x777777,
-          shininess: 1,
         });
 
         back.material = topDoor.material = bottomDoor.material = fridgeMat;
@@ -178,7 +183,7 @@
 
             // so impact doesn't have to reset
             var slide = new TWEEN.Tween(fridgeGroup.rotation)
-              .to({ y: THREE.Math.degToRad(10) }, 200)
+              .to({ y: THREE.MathUtils.degToRad(10) }, 200)
               .delay(150)
               .easing(TWEEN.Easing.Cubic.Out)
               .start();

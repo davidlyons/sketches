@@ -1,417 +1,430 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<!-- Global site tag (gtag.js) - Google Analytics -->
-		<script async src="https://www.googletagmanager.com/gtag/js?id=G-WTY198QNED"></script>
-		<script src="../../ga.js"></script>
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WTY198QNED"></script>
+    <script src="../../ga.js"></script>
 
-		<meta charset="utf-8">
-		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<meta name="description" content="">
-		<meta name="author" content="">
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
 
-		<title>Lorax Tree</title>
+    <title>Lorax Tree</title>
 
-		<link href="../../info.css" rel="stylesheet">
-		
-		<style>
-			* { box-sizing: border-box; }
+    <link href="../../info.css" rel="stylesheet" />
 
-			html { overflow: hidden; }
+    <style>
+      * {
+        box-sizing: border-box;
+      }
 
-			body {
-				margin: 0;
-				padding: 0;
-				overflow: hidden;
-				font-family: Arial, sans-serif;
-				font-size: 13px;
-				line-height: 20px;
-				color: #333;
-				background: #c0dbe0;
-			}
-		</style>
+      html {
+        overflow: hidden;
+      }
 
-	</head>
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+        font-size: 13px;
+        line-height: 20px;
+        color: #333;
+        background: #c0dbe0;
+      }
+    </style>
+  </head>
 
-	<body>
+  <body>
+    <div id="container"></div>
 
-		<div id="container"></div>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/",
+          "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.20.0/+esm"
+        }
+      }
+    </script>
 
-		<script src="https://cdn.rawgit.com/mrdoob/three.js/r96/build/three.js"></script>
-		<script src="https://cdn.rawgit.com/mrdoob/three.js/r96/examples/js/controls/OrbitControls.js"></script>
-		<script src="https://cdn.rawgit.com/mrdoob/three.js/r96/examples/js/Detector.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.0-0/dat.gui.min.js"></script>
+    <script src="../../info.js"></script>
 
-		<script src="../../info.js"></script>
+    <script type="module">
+      import * as THREE from 'three';
+      import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+      import { GUI } from 'lil-gui';
 
-		<script>
+      var info = new Info(
+        'Lorax Tree',
+        [
+          'Codevember 2017, Day 3',
+          'Tube geo, skeleton, spring physics, and vertex displacement shader',
+          '<a href="https://davidlyons.dev">David Lyons</a>',
+        ].join('<br>')
+      );
 
-			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+      //
 
-			var info = new Info(
-				'Lorax Tree',
-				['Codevember 2017, Day 3',
-				 'Tube geo, skeleton, spring physics, and vertex displacement shader',
-				 '<a href="https://davidlyons.dev">David Lyons</a>'].join('<br>')
-			);
+      var TreeShader = {
+        uniforms: {
+          amplitude: { type: 'f', value: 0 },
+          diffuse: { type: 'c', value: new THREE.Color(0xff6de9) },
+        },
 
-			//
+        vertexShader: `
+					uniform float amplitude;
+					attribute float displacement;
+					varying vec3 vNormal;
+					varying vec3 vViewPosition;
 
-			var TreeShader = {
-
-				uniforms: {
-					amplitude: { type: 'f', value: 0 },
-					diffuse: { type: 'c', value: new THREE.Color(0xff6de9) },
-				},
-
-				vertexShader: [
-
-					"uniform float amplitude;",
-					"attribute float displacement;",
-					"varying vec3 vNormal;",
-					"varying vec3 vViewPosition;",
-
-					"void main() {",
+					void main() {
 
 						// multiply our displacement by the amplitude.
 						// The amp will get animated so we'll have animated displacement
-						"vec3 newPosition = position + normal * vec3(displacement * amplitude);",
+						vec3 newPosition = position + normal * vec3(displacement * amplitude);
 
-						"vec4 modelViewPosition = modelViewMatrix * vec4(newPosition,1.0);",
-						"vViewPosition = -modelViewPosition.xyz;",
+						vec4 modelViewPosition = modelViewMatrix * vec4(newPosition,1.0);
+						vViewPosition = -modelViewPosition.xyz;
 
-						"gl_Position = projectionMatrix * modelViewPosition;",
+						gl_Position = projectionMatrix * modelViewPosition;
 
-						"vNormal = normalMatrix * normal;",
-					"}"
+						vNormal = normalMatrix * normal;
+					}`,
+      };
 
-				].join('\n'),
+      //
 
-			};
+      var gui = new GUI();
+      gui.close();
 
-			//
+      var container = document.getElementById('container');
 
-			var gui = new dat.GUI();
-			gui.close();
+      var renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setClearColor(0xc0dbe0, 1); // blue
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      container.appendChild(renderer.domElement);
 
-			var container = document.getElementById( 'container' );
+      renderer.domElement.style.cursor = 'pointer';
 
-			var renderer = new THREE.WebGLRenderer( { antialias: true } );
-			renderer.setClearColor( 0xc0dbe0, 1 ); // blue
-			renderer.setPixelRatio( window.devicePixelRatio );
-			renderer.setSize( window.innerWidth, window.innerHeight );
-			container.appendChild( renderer.domElement );
+      var camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 100000);
+      camera.position.set(0, 5, 20);
 
-			renderer.domElement.style.cursor = 'pointer';
+      var controls = new OrbitControls(camera, renderer.domElement);
+      controls.target.y = 5;
+      controls.enabled = false;
 
-			var camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 100000 );
-			camera.position.set( 0, 5, 20 );
+      var scene = new THREE.Scene();
 
-			var controls = new THREE.OrbitControls( camera, renderer.domElement );
-			controls.target.y = 5;
-			controls.enabled = false;
+      // lights
+      var aLight = new THREE.AmbientLight(0x777777, 1.5);
+      scene.add(aLight);
 
-			var scene = new THREE.Scene();
+      var dLight = new THREE.DirectionalLight(0xffffff, 1.2);
+      dLight.position.set(7, 5, 9);
+      scene.add(dLight);
 
-			// lights
-			var aLight = new THREE.AmbientLight( 0x777777 );
-			scene.add( aLight );
+      // var dlh = new THREE.DirectionalLightHelper( dLight );
+      // scene.add( dlh );
 
-			var dLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
-			dLight.position.set( 7, 5, 9 );
-			scene.add( dLight );
+      // ground
+      // helper = new THREE.GridHelper( 4, 10, 0x000000, 0x808080 );
+      // scene.add( helper );
 
-			// var dlh = new THREE.DirectionalLightHelper( dLight );
-			// scene.add( dlh );
+      // ------------------------------------------------------------
 
-			// ground
-			// helper = new THREE.GridHelper( 4, 10, 0x000000, 0x808080 );
-			// scene.add( helper );
+      var treeGroup = new THREE.Group();
+      scene.add(treeGroup);
 
-			// ------------------------------------------------------------
+      // ------------------------------------------------------------
 
-			var treeGroup = new THREE.Group();
-			scene.add( treeGroup );
+      // shadow
 
-			// ------------------------------------------------------------
+      var shadowGeo = new THREE.CircleGeometry(1.2, 16);
 
-			// shadow
+      var shadowMat = new THREE.MeshBasicMaterial({ color: 0x8bb1b8 });
+      var shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
+      shadowMesh.rotation.x = -Math.PI / 2;
+      treeGroup.add(shadowMesh);
 
-			var shadowGeo = new THREE.CircleBufferGeometry( 1.2, 16 );
+      var shadowMat = new THREE.MeshBasicMaterial({ color: 0xa3c4ca });
+      var shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
+      shadowMesh.scale.setScalar(1.5);
+      shadowMesh.position.y = -0.01;
+      shadowMesh.rotation.x = -Math.PI / 2;
+      treeGroup.add(shadowMesh);
 
-			var shadowMat = new THREE.MeshBasicMaterial({ color: 0x8bb1b8 });
-			var shadowMesh = new THREE.Mesh( shadowGeo, shadowMat );
-			shadowMesh.rotation.x = - Math.PI / 2;
-			treeGroup.add( shadowMesh );
+      // ------------------------------------------------------------
 
-			var shadowMat = new THREE.MeshBasicMaterial({ color: 0xa3c4ca });
-			var shadowMesh = new THREE.Mesh( shadowGeo, shadowMat );
-			shadowMesh.scale.setScalar( 1.5 );
-			shadowMesh.position.y = -0.01;
-			shadowMesh.rotation.x = - Math.PI / 2;
-			treeGroup.add( shadowMesh );
+      // trunk tube geo
 
-			// ------------------------------------------------------------
+      var spline = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0, 2, 0),
+        new THREE.Vector3(0.2, 4, -0.2),
+        new THREE.Vector3(-0.2, 6, 0.2),
+        new THREE.Vector3(0, 8, 0),
+        new THREE.Vector3(0, 10, 0),
+      ]);
 
-			// trunk tube geo
+      spline.curveType = 'catmullrom';
 
-			var spline = new THREE.CatmullRomCurve3([
-				new THREE.Vector3(  0,    0,  0  ),
-				new THREE.Vector3(  0,    2,  0  ),
-				new THREE.Vector3(  0.2,  4,  -.2  ),
-				new THREE.Vector3( -0.2,  6,  .2 ),
-				new THREE.Vector3(  0,    8,  0  ),
-				new THREE.Vector3(  0,   10,  0  )
-			]);
-			spline.curveType = 'catmullrom';
+      var trunkGeo = new THREE.TubeGeometry(spline, 20, 0.13, 8, false);
+      var trunkMat = new THREE.MeshLambertMaterial({
+        color: 0xffe082, // yellow
+      });
 
-			var trunkGeo = new THREE.TubeGeometry( spline, 20, 0.13, 8, false );
-			var trunkMat = new THREE.MeshLambertMaterial({
-				color: 0xceab56, // yellow
-				skinning: true
-			});
-			var trunkMesh = new THREE.SkinnedMesh( trunkGeo, trunkMat );
+      var trunkMesh = new THREE.SkinnedMesh(trunkGeo, trunkMat);
 
-			// skin weights
+      // skin weights
 
-			var segmentHeight = 2;
+      var segmentHeight = 2;
+      var posAttr = trunkGeo.attributes.position;
+      var vertexCount = posAttr.count;
 
-			for ( var i = 0; i < trunkGeo.vertices.length; i ++ ) {
+      var skinIndices = [];
+      var skinWeights = [];
 
-				var vertex = trunkGeo.vertices[ i ];
-				var y = Math.max(vertex.y, 0.01); // without adding .1, the bottom edge loop is wonky?
+      var numBones = spline.points.length;
 
-				var skinIndex = Math.floor( y / segmentHeight );
-				var skinWeight = ( y % segmentHeight ) / segmentHeight;
+      for (var i = 0; i < vertexCount; i++) {
+        var y = posAttr.getY(i);
+        y = Math.max(y, 0.01); // without adding .1, the bottom edge loop is wonky?
 
-				trunkGeo.skinIndices.push( new THREE.Vector4( skinIndex, skinIndex + 1, 0, 0 ) );
-				trunkGeo.skinWeights.push( new THREE.Vector4( 1 - skinWeight, skinWeight, 0, 0 ) );
+        var skinIndex = Math.floor(y / segmentHeight);
+        var skinWeight = (y % segmentHeight) / segmentHeight;
 
-			}
+        // Each vertex can be influenced by up to 4 bones (here they use 2)
+        // Clamp indices to valid bone range
+        var si0 = Math.min(skinIndex, numBones - 1);
+        var si1 = Math.min(skinIndex + 1, numBones - 1);
 
-			// skeleton bones
+        skinIndices.push(si0, si1, 0, 0);
+        skinWeights.push(1 - skinWeight, skinWeight, 0, 0);
+      }
 
-			bones = [];
-			var prevBone = new THREE.Bone();
-			bones.push( prevBone );
+      // Add as buffer attributes
+      trunkGeo.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndices, 4));
+      trunkGeo.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeights, 4));
 
-			for ( var i = 1; i < spline.points.length; i++ ) {
+      // skeleton bones
 
-				var bone = new THREE.Bone();
-				bone.position.subVectors( spline.points[i], spline.points[i-1] );
-				bones.push( bone );
-				prevBone.add( bone );
-				prevBone = bone;
+      var bones = [];
+      var prevBone = new THREE.Bone();
+      bones.push(prevBone);
 
-			}
+      for (var i = 1; i < spline.points.length; i++) {
+        var bone = new THREE.Bone();
+        bone.position.subVectors(spline.points[i], spline.points[i - 1]);
+        bones.push(bone);
+        prevBone.add(bone);
+        prevBone = bone;
+      }
 
-			var skeleton = new THREE.Skeleton( bones );
+      var skeleton = new THREE.Skeleton(bones);
 
-			trunkMesh.add( bones[ 0 ] );
-			trunkMesh.bind( skeleton );
+      trunkMesh.add(bones[0]);
+      trunkMesh.bind(skeleton);
 
-			trunkMesh.scale.multiplyScalar( 1 );
-			treeGroup.add( trunkMesh );
+      trunkMesh.scale.multiplyScalar(1);
+      treeGroup.add(trunkMesh);
 
-			skeletonHelper = new THREE.SkeletonHelper( trunkMesh );
-			skeletonHelper.material.linewidth = 2;
-			scene.add( skeletonHelper );
-			skeletonHelper.visible = false;
+      var skeletonHelper = new THREE.SkeletonHelper(trunkMesh);
+      skeletonHelper.material.linewidth = 2;
+      scene.add(skeletonHelper);
+      skeletonHelper.visible = false;
 
-			gui.add(skeletonHelper, 'visible').name('skeleton visible');
+      gui.add(skeletonHelper, 'visible').name('skeleton visible');
 
-			//
+      //
 
-			var rotation = new THREE.Euler();
+      var rotation = new THREE.Euler();
 
-			function updateRotation(){
-				for (var i = 0; i < bones.length; i++) {
-					bones[i].rotation.copy( rotation );
-				}
-			}
+      function updateRotation() {
+        for (var i = 0; i < bones.length; i++) {
+          bones[i].rotation.copy(rotation);
+        }
+      }
 
-			gui.add( rotation, 'x', -Math.PI / 4, Math.PI / 4 ).onChange( updateRotation );
+      gui.add(rotation, 'x', -Math.PI / 4, Math.PI / 4).onChange(updateRotation);
 
-			// var wireframe = new THREE.WireframeGeometry( trunkGeo );
-			// var line = new THREE.LineSegments( wireframe );
-			// line.material.color.setHex( 0x000000 );
-			// line.material.transparent = true;
-			// line.material.opacity = 0.7;
-			// treeGroup.add( line );
+      // var wireframe = new THREE.WireframeGeometry( trunkGeo );
+      // var line = new THREE.LineSegments( wireframe );
+      // line.material.color.setHex( 0x000000 );
+      // line.material.transparent = true;
+      // line.material.opacity = 0.7;
+      // treeGroup.add( line );
 
-			// -----------------------------------------------------------------
+      // -----------------------------------------------------------------
 
-			// leaves
+      // leaves
 
-			var leavesGeo = new THREE.SphereBufferGeometry( 1.2, 32, 32 );
-			leavesGeo.rotateY( -Math.PI / 2 ); // put the seam in the back
+      var leavesGeo = new THREE.SphereGeometry(1.2, 32, 32);
+      leavesGeo.rotateY(-Math.PI / 2); // put the seam in the back
 
-			var phongShader = THREE.ShaderLib.phong;
-			// console.log( phongShader.uniforms );
+      var phongShader = THREE.ShaderLib.phong;
+      // console.log( phongShader.uniforms );
 
-			var shaderMaterial = new THREE.ShaderMaterial({
-				uniforms: THREE.UniformsUtils.merge([
-					phongShader.uniforms,
-					TreeShader.uniforms
-				]),
-				vertexShader: 	TreeShader.vertexShader,
-				fragmentShader:	phongShader.fragmentShader,
-				side: THREE.DoubleSide,
-				lights: true
-			});
+      var shaderMaterial = new THREE.ShaderMaterial({
+        uniforms: THREE.UniformsUtils.merge([phongShader.uniforms, TreeShader.uniforms]),
+        vertexShader: TreeShader.vertexShader,
+        fragmentShader: phongShader.fragmentShader,
+        side: THREE.DoubleSide,
+        lights: true,
+      });
 
-			// populate the array of displacement attributes
-			var length = leavesGeo.attributes.position.count;
-			var displacement = new Float32Array( length );
-			for(var v = 0; v < length; v++) {
-				displacement[v] = Math.random() * 0.15;
-			}
-			leavesGeo.addAttribute( 'displacement', new THREE.BufferAttribute( displacement, 1 ) );
+      // populate the array of displacement attributes
+      var length = leavesGeo.attributes.position.count;
+      var displacement = new Float32Array(length);
+      for (var v = 0; v < length; v++) {
+        displacement[v] = Math.random() * 0.15;
+      }
+      leavesGeo.setAttribute('displacement', new THREE.BufferAttribute(displacement, 1));
 
-			var leaves = new THREE.Mesh( leavesGeo, shaderMaterial );
-			bones[ bones.length-1 ].add( leaves );
+      var leaves = new THREE.Mesh(leavesGeo, shaderMaterial);
+      bones[bones.length - 1].add(leaves);
+
+      var frame = 1;
+      shaderMaterial.uniforms.amplitude.value = Math.sin(frame) + 3;
+
+      // -----------------------------------------------------------------
 
-			var frame = 1;
-			shaderMaterial.uniforms.amplitude.value = Math.sin( frame ) + 3;
+      // spring physics
 
-			// -----------------------------------------------------------------
+      // https://burakkanber.com/blog/physics-in-javascript-car-suspension-part-1-spring-mass-damper/
+      // https://jsfiddle.net/bkanber/pDngH
 
-			// spring physics
+      var spring = {
+        stiffness: -20, // in kg / s^2
+        damping: -0.25, // in kg / s
+        length: 0.35, // THREE.Math.degToRad(20)
+      };
 
-			// https://burakkanber.com/blog/physics-in-javascript-car-suspension-part-1-spring-mass-damper/
-			// https://jsfiddle.net/bkanber/pDngH
+      // Block position and velocity
+      var block = {
+        x: spring.length, // equilibrium
+        v: 0,
+        mass: 0.03,
+      };
 
-			var spring = {
-				stiffness: -20, // in kg / s^2
-				damping: -0.25, // in kg / s
-				length: 0.35, // THREE.Math.degToRad(20)
-			};
+      var frameRate = 1 / 60;
 
-			// Block position and velocity
-			var block = {
-				x: spring.length, // equilibrium
-				v: 0,
-				mass: 0.03
-			};
+      var f1 = gui.addFolder('physics');
+      f1.add(spring, 'stiffness', -40, 0);
+      f1.add(spring, 'damping', -0.5, 0);
+      f1.add(block, 'mass', 0.005, 0.5);
+      f1.open();
 
-			var frameRate  = 1/60;
+      spring.reset = function () {
+        block.x = 0;
+      };
 
-			var f1 = gui.addFolder('physics');
-			f1.add( spring, 'stiffness', -40, 0 );
-			f1.add( spring, 'damping', -0.5, 0 );
-			f1.add( block, 'mass', 0.005, 0.5 );
-			f1.open();
+      f1.add(spring, 'reset');
 
-			spring.reset = function() {
-				block.x = 0;
-			};
+      function updateTree(x) {
+        block.x = x + spring.length;
+        for (var i = 0; i < bones.length; i++) {
+          bones[i].rotation.z = x;
+        }
+      }
 
-			f1.add( spring, 'reset' );
+      function updatePhysics() {
+        var F_spring = spring.stiffness * (block.x - spring.length);
+        var F_damper = spring.damping * block.v;
 
-			function updateTree( x ) {
-				block.x = x + spring.length;
-				for ( var i = 0; i < bones.length; i++) {
-					bones[i].rotation.z = x;
-				}
-			}
+        var a = (F_spring + F_damper) / block.mass;
+        block.v += a * frameRate;
+        block.x += block.v * frameRate;
 
-			function updatePhysics() {
-				var F_spring = spring.stiffness * ( block.x - spring.length );
-				var F_damper = spring.damping * block.v;
+        // offset so it zeros out in the center
+        var x = block.x - spring.length;
+        updateTree(x);
+      }
 
-				var a = ( F_spring + F_damper ) / block.mass;
-				block.v += a * frameRate;
-				block.x += block.v * frameRate;
+      // -----------------------------------------------------------------
 
-				// offset so it zeros out in the center
-				var x = block.x - spring.length;
-				updateTree( x );
+      // mouse events
 
-			}
+      var mouseOnDown = new THREE.Vector2();
+      var mouse = new THREE.Vector2();
+      mouse.isDown = false;
+      var diff = new THREE.Vector2();
+      var canvas = renderer.domElement;
 
-			// -----------------------------------------------------------------
+      function setNDC(m, e) {
+        // normalized device coordinates
+        m.x = (e.clientX / window.innerWidth) * 2 - 1;
+        m.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      }
 
-			// mouse events
+      function mousedown(e) {
+        e.preventDefault();
+        mouse.isDown = true;
+        var event = (e.touches && e.touches[0]) || e;
+        setNDC(mouseOnDown, event);
+        renderer.domElement.style.cursor = 'move';
 
-			var mouseOnDown = new THREE.Vector2();
-			var mouse = new THREE.Vector2();
-			mouse.isDown = false;
-			var diff = new THREE.Vector2();
-			var canvas = renderer.domElement;
+        canvas.addEventListener('mousemove', mousemove, false);
+        canvas.addEventListener('touchmove', mousemove, false);
+      }
 
-			function setNDC(m, e) { // normalized device coordinates
-				m.x = ( e.clientX / window.innerWidth ) * 2 - 1;
-				m.y = - ( e.clientY / window.innerHeight ) * 2 + 1;
-			}
+      function mousemove(e) {
+        var event = (e.touches && e.touches[0]) || e;
+        setNDC(mouse, event);
+        diff.subVectors(mouseOnDown, mouse);
+        var x = THREE.MathUtils.clamp(diff.x, -0.5, 0.5);
+        updateTree(x);
+      }
 
-			function mousedown(e){
-				e.preventDefault();
-				mouse.isDown = true;
-				var event = e.touches && e.touches[0] || e;
-				setNDC( mouseOnDown, event );
-				renderer.domElement.style.cursor = 'move';
+      function mouseup() {
+        mouse.isDown = false;
+        renderer.domElement.style.cursor = 'pointer';
 
-				canvas.addEventListener('mousemove', mousemove, false);
-				canvas.addEventListener('touchmove', mousemove, false);
-			}
+        canvas.removeEventListener('mousemove', mousemove, false);
+        canvas.removeEventListener('touchmove', mousemove, false);
+      }
 
-			function mousemove(e){
-				var event = e.touches && e.touches[0] || e;
-				setNDC( mouse, event );
-				diff.subVectors( mouseOnDown, mouse );
-				var x = THREE.Math.clamp( diff.x, -0.5, 0.5 );
-				updateTree( x );
-			}
+      canvas.addEventListener('mousedown', mousedown, false);
+      canvas.addEventListener('mouseup', mouseup, false);
 
-			function mouseup(){
-				mouse.isDown = false;
-				renderer.domElement.style.cursor = 'pointer';
+      canvas.addEventListener('touchstart', mousedown, false);
+      canvas.addEventListener('touchend', mouseup, false);
 
-				canvas.removeEventListener('mousemove', mousemove, false)
-				canvas.removeEventListener('touchmove', mousemove, false)
-			}
+      //
 
-			canvas.addEventListener('mousedown', mousedown, false);
-			canvas.addEventListener('mouseup', mouseup, false);
+      window.addEventListener('resize', resize, false);
+      function resize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
 
-			canvas.addEventListener('touchstart', mousedown, false);
-			canvas.addEventListener('touchend', mouseup, false);
+      loop();
 
-			//
+      function loop(time) {
+        requestAnimationFrame(loop);
+        // TWEEN.update();
 
-			window.addEventListener( 'resize', resize, false );
-			function resize() {
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-				renderer.setSize( window.innerWidth, window.innerHeight );
-			}
+        // frame += 0.05;
 
-			loop();
+        // shaderMaterial.uniforms.amplitude.value = Math.sin( frame * 3 ) / 2 + 3.0;
 
-			function loop( time ) {
-				requestAnimationFrame( loop );
-				// TWEEN.update();
+        // rotation.x = Math.cos( frame / 2 ) / 20;
+        // rotation.z = Math.sin( frame / 2 ) / 20;
+        // updateRotation();
 
-				// frame += 0.05;
+        if (!mouse.isDown) {
+          updatePhysics();
+        }
 
-				// shaderMaterial.uniforms.amplitude.value = Math.sin( frame * 3 ) / 2 + 3.0;
+        //
 
-				// rotation.x = Math.cos( frame / 2 ) / 20;
-				// rotation.z = Math.sin( frame / 2 ) / 20;
-				// updateRotation();
-
-				if ( !mouse.isDown ) {
-					updatePhysics();
-				}
-
-				//
-
-				controls.update();
-				renderer.render( scene, camera );
-			}
-
-		</script>
-
-	</body>
+        controls.update();
+        renderer.render(scene, camera);
+      }
+    </script>
+  </body>
 </html>

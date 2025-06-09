@@ -1,511 +1,467 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<!-- Global site tag (gtag.js) - Google Analytics -->
-		<script async src="https://www.googletagmanager.com/gtag/js?id=G-WTY198QNED"></script>
-		<script src="../../ga.js"></script>
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WTY198QNED"></script>
+    <script src="../../ga.js"></script>
+
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+
+    <title>Sky</title>
+
+    <link href="../../info.css" rel="stylesheet" />
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        overflow: hidden;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+        font-size: 13px;
+        line-height: 20px;
+        color: #333;
+        background: #4831ab;
+      }
+
+      #webglmessage {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        margin-left: -200px !important;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="container"></div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/"
+        }
+      }
+    </script>
+
+    <script src="../../info.js"></script>
+
+    <script type="module">
+      import * as THREE from 'three';
+      import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+      var info = new Info(
+        'Sky',
+        ['Codevember 2018, Day 4', '<a href="https://davidlyons.dev">David Lyons</a>'].join('<br>')
+      );
+
+      THREE.ColorManagement.enabled = false;
+
+      var container = document.getElementById('container');
+
+      var renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      container.appendChild(renderer.domElement);
+
+      var camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 0, 4);
+
+      // var controls = new OrbitControls(camera, renderer.domElement);
+      // controls.screenSpacePanning = true;
+
+      var scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x4831ab);
+
+      // lights
+      var aLight = new THREE.AmbientLight(0x7f46ab, 3);
+      scene.add(aLight);
+
+      // ground
+      // var gh = new THREE.GridHelper( 2, 10, 0x000000, 0x808080 );
+      // scene.add( gh );
+
+      // ---------------------------------------------------------------
+      // ---------------------------------------------------------------
+
+      // clouds
+
+      var cloudsSize = new THREE.Vector3(15, 4, 6);
+      var cloudsBox = new THREE.Box3();
+      cloudsBox.setFromCenterAndSize(new THREE.Vector3(), cloudsSize);
+
+      // var cloudsBoxHelper = new THREE.Box3Helper( cloudsBox );
+      // scene.add( cloudsBoxHelper );
+
+      // -----------------------------------------------------------------
 
-		<meta charset="utf-8">
-		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<meta name="description" content="">
-		<meta name="author" content="">
+      var sphereGeo = new THREE.SphereGeometry(0.2, 32, 16);
+      var cloudMat = new THREE.MeshPhongMaterial({
+        color: 0xffffff,
+        shininess: 0,
+      });
 
-		<title>Sky</title>
+      class Cloud extends THREE.Group {
+        constructor() {
+          super();
 
-		<link href="../../info.css" rel="stylesheet">
+          // this.add( new THREE.AxesHelper() );
 
-		<style>
-			* { box-sizing: border-box; }
+          this.spheres = [];
 
-			html { overflow: hidden; }
+          // fill in 3 boxes with a random number of
+          // randomly positioned and randomly scaled spheres
 
-			body {
-				margin: 0;
-				padding: 0;
-				overflow: hidden;
-				font-family: Arial, sans-serif;
-				font-size: 13px;
-				line-height: 20px;
-				color: #333;
-				background: #4831ab;
-			}
+          // large base
+          var center1 = new THREE.Vector3();
+          var size1 = new THREE.Vector3(1, 0.25, 0.6);
+          var number1 = THREE.MathUtils.randInt(10, 25);
+          var scaleRange1 = new THREE.Vector2(0.2, 1);
+          this.fillBox(center1, size1, number1, scaleRange1);
 
-			#webglmessage {
-				position: absolute;
-				top: 0;
-				left: 50%;
-				margin-left: -200px !important;
-			}
-		</style>
+          // top of cloud
+          var center2 = new THREE.Vector3(0, size1.y, 0);
+          var size2 = new THREE.Vector3(0.5, 0.25, 0.5);
+          var number2 = THREE.MathUtils.randInt(5, 15);
+          var scaleRange2 = new THREE.Vector2(0.2, 1);
+          this.fillBox(center2, size2, number2, scaleRange2);
+
+          // small tail
+          var center3 = new THREE.Vector3(-0.7, 0, 0);
+          var size3 = new THREE.Vector3(0.4, 0.2, 0.25);
+          var number3 = THREE.MathUtils.randInt(3, 7);
+          var scaleRange3 = new THREE.Vector2(0.1, 0.5);
+          this.fillBox(center3, size3, number3, scaleRange3);
+
+          this.userData.velocity = THREE.MathUtils.randFloat(0.003, 0.007);
+        }
+
+        fillBox(center, size, number, scale) {
+          var box = new THREE.Box3();
+          box.setFromCenterAndSize(center, size);
+
+          // var boxHelper = new THREE.Box3Helper( box );
+          // this.add( boxHelper );
+
+          //
+
+          var boxGroup = new THREE.Group();
+          boxGroup.position.copy(center);
+          this.add(boxGroup);
+
+          for (var i = 0; i < number; i++) {
+            var sphere = new THREE.Mesh(sphereGeo, cloudMat);
+
+            sphere.position.set(
+              THREE.MathUtils.randFloatSpread(size.x),
+              THREE.MathUtils.randFloatSpread(size.y),
+              THREE.MathUtils.randFloatSpread(size.z)
+            );
+
+            // sphere.scale.setScalar( THREE.Math.randFloat( 0.1, 0.1 ) );
+            sphere.userData.scale = THREE.MathUtils.randFloat(scale.x, scale.y);
+            sphere.scale.setScalar(sphere.userData.scale);
+
+            sphere.userData.velocity = THREE.MathUtils.randFloat(0.001, 0.002);
+
+            boxGroup.add(sphere);
+            this.spheres.push(sphere);
+          }
+
+          return boxGroup;
+        }
+
+        update(t) {
+          // scale individual spheres
+          for (var i = 0; i < this.spheres.length; i++) {
+            var sphere = this.spheres[i];
+            var scaleOffset = Math.sin(t + (i + 1)) * 0.4 + 1;
+            sphere.scale.setScalar(sphere.userData.scale * scaleOffset);
+          }
+
+          // move entire cloud forward
+          this.position.x += this.userData.velocity;
+
+          // reset cloud position
+          if (this.position.x > cloudsBox.max.x) {
+            this.position.x = cloudsBox.min.x;
+          }
+        }
+      }
+
+      // -----------------------------------------------------------------
+
+      // fill clouds box with clouds
+
+      var clouds = [];
+
+      for (var i = 0; i < 40; i++) {
+        var cloud = new Cloud();
+
+        cloud.position.set(
+          THREE.MathUtils.randFloatSpread(cloudsSize.x),
+          THREE.MathUtils.randFloatSpread(cloudsSize.y),
+          THREE.MathUtils.randFloatSpread(cloudsSize.z)
+        );
+
+        scene.add(cloud);
+        clouds.push(cloud);
+      }
+
+      // -----------------------------------------------------------------
+      // -----------------------------------------------------------------
+
+      // moon
+
+      var MoonShader = {
+        uniforms: {
+          colorA: { type: 'v3', value: scene.background },
+          colorB: { type: 'v3', value: new THREE.Color('#fff') },
+        },
+
+        vertexShader: `
+          varying vec2 vUv;
+          void main() {
+          	vUv = uv;
+          	gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+          }
+        `,
+
+        fragmentShader: `
+          varying vec2 vUv;
+          uniform vec3 colorA;
+          uniform vec3 colorB;
+
+          void main() {
+           float pct = smoothstep( 0.39, 0.44, vUv.y );
+          	vec3 col = mix( colorA, colorB, pct );
+          	gl_FragColor = vec4( col, 1.0 );
+          }
+        `,
+      };
+
+      var moonGeo = new THREE.SphereGeometry(2, 32, 32);
+      var moonMat = new THREE.ShaderMaterial({
+        uniforms: THREE.UniformsUtils.clone(MoonShader.uniforms),
+        vertexShader: MoonShader.vertexShader,
+        fragmentShader: MoonShader.fragmentShader,
+      });
+      var moon = new THREE.Mesh(moonGeo, moonMat);
+      moon.position.set(-3, 4, -20);
+      moon.rotation.set(-Math.PI / 2, -Math.PI / 6, Math.PI / 4);
+      scene.add(moon);
+
+      // moon.add( new THREE.AxesHelper(2) );
+
+      var moonLight = new THREE.DirectionalLight(0xffffff, 0.8);
+      moonLight.position.copy(moon.position);
+      scene.add(moonLight);
+
+      // var mlh =  new THREE.DirectionalLightHelper( moonLight, 0.5 );
+      // scene.add( mlh );
+
+      //
+
+      // key light
+
+      var dLight = new THREE.DirectionalLight(0xffffff, 0.5);
+      dLight.position.set(1, 1, 1);
+      scene.add(dLight);
+
+      // var dlh =  new THREE.DirectionalLightHelper( dLight, 0.5 );
+      // scene.add( dlh );
+
+      // ---------------------------------------------------------------
+      // ---------------------------------------------------------------
+
+      // stars
+
+      var StarShader = {
+        uniforms: {
+          color: { type: 'v3', value: new THREE.Color(0xffffff) },
+          textureMap: { type: 't', value: null },
+          time: { type: 'f', value: 0 },
+          size: { type: 'f', value: 500.0 },
+        },
+
+        vertexShader: `
+          uniform float time;
+          uniform float size;
+          attribute float alphaOffset;
+          varying float vAlpha;
+          uniform vec4 origin;
+
+          void main() {
+						vAlpha = 0.5 * ( 1.0 + sin( alphaOffset + time ) );
+
+						vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+						float cameraDist = distance( mvPosition, origin );
+						gl_PointSize = size / cameraDist;
+						gl_Position = projectionMatrix * mvPosition;
+          }
+        `,
+
+        fragmentShader: `
+          uniform float time;
+          uniform vec3 color;
+          uniform sampler2D textureMap;
+
+          varying float vAlpha;
+
+          void main() {
+            gl_FragColor = vec4( color, vAlpha );
+            gl_FragColor = gl_FragColor * texture( textureMap, gl_PointCoord );
+          }
+        `,
+      };
 
-	</head>
+      class Stars extends THREE.Group {
+        constructor({ color = 0x333333, size = 0.4, pointCount = 40, range = new THREE.Vector(2, 2, 2) } = {}) {
+          super();
+
+          // circle texture
+
+          var canvas = document.createElement('canvas');
+          canvas.width = canvas.height = 128;
+          var ctx = canvas.getContext('2d');
 
-	<body>
+          var centerX = canvas.width / 2;
+          var centerY = canvas.height / 2;
+          var radius = canvas.width / 3;
 
-		<div id="container"></div>
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+          ctx.fillStyle = '#fff';
+          ctx.fill();
 
-		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/build/three.js"></script>
-		<!-- <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/examples/js/controls/OrbitControls.js"></script> -->
-		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/examples/js/WebGL.js"></script>
-		<!-- <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/examples/js/loaders/FBXLoader.js"></script> -->
-		<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.3/dat.gui.min.js"></script> -->
-		<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.2.0/Tween.min.js"></script> -->
+          var texture = new THREE.Texture(canvas);
+          texture.premultiplyAlpha = true;
+          texture.needsUpdate = true;
 
-		<script src="../../info.js"></script>
+          //
 
-		<script>
+          StarShader.uniforms.textureMap.value = texture;
+          StarShader.uniforms.size.value = size;
 
-			if ( WEBGL.isWebGLAvailable() === false ) {
-				document.body.appendChild( WEBGL.getWebGLErrorMessage() );
-			}
+          var pointsMat = new THREE.ShaderMaterial({
+            uniforms: StarShader.uniforms,
+            vertexShader: StarShader.vertexShader,
+            fragmentShader: StarShader.fragmentShader,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            transparent: true,
+          });
 
-			var info = new Info(
-				'Sky',
-				[
-					'Codevember 2018, Day 4',
-					'<a href="https://davidlyons.dev">David Lyons</a>'
-				].join('<br>')
-			);
+          var pointsGeo = new THREE.BufferGeometry();
 
-			var container = document.getElementById( 'container' );
+          var positions = new Float32Array(pointCount * 3);
+          var alphas = new Float32Array(pointCount);
 
-			var renderer = new THREE.WebGLRenderer( { antialias: true } );
-			renderer.setPixelRatio( window.devicePixelRatio );
-			renderer.setSize( window.innerWidth, window.innerHeight );
-			container.appendChild( renderer.domElement );
+          for (var i = 0; i < pointCount; i++) {
+            positions[i * 3 + 0] = THREE.MathUtils.randFloatSpread(range.x);
+            positions[i * 3 + 1] = THREE.MathUtils.randFloatSpread(range.y);
+            positions[i * 3 + 2] = THREE.MathUtils.randFloatSpread(range.z);
 
-			var camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, .1, 1000 );
-			camera.position.set( 0, 0, 4 );
+            alphas[i] = i;
+          }
 
-			// var controls = new THREE.OrbitControls( camera, renderer.domElement );
-			// controls.screenSpacePanning = true;
+          pointsGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+          pointsGeo.setAttribute('alphaOffset', new THREE.BufferAttribute(alphas, 1));
 
-			var scene = new THREE.Scene();
-			scene.background = new THREE.Color( 0x4831ab );
+          var points = (this.points = new THREE.Points(pointsGeo, pointsMat));
+          points.sortParticles = true;
+          points.renderOrder = 1;
 
-			// lights
-			var aLight = new THREE.AmbientLight( 0x7f46ab );
-			scene.add( aLight );
+          this.add(points);
 
-			// ground
-			// var gh = new THREE.GridHelper( 2, 10, 0x000000, 0x808080 );
-			// scene.add( gh );
+          var box = new THREE.Box3();
+          box.setFromCenterAndSize(points.position, range);
 
-			// ---------------------------------------------------------------
-			// ---------------------------------------------------------------
+          // var boxHelper = new THREE.Box3Helper( box );
+          // this.add( boxHelper );
+        }
+      }
 
-			// clouds
+      // ---------------------------------------------------------------
 
-			var cloudsSize = new THREE.Vector3( 15, 4, 6 );
-			var cloudsBox = new THREE.Box3();
-			cloudsBox.setFromCenterAndSize( new THREE.Vector3(), cloudsSize );
+      var stars = new Stars({
+        color: 0xffffff,
+        range: new THREE.Vector3(110, 60, 30),
+        pointCount: 400,
+        size: 400,
+        speed: 0.1,
+      });
 
-			// var cloudsBoxHelper = new THREE.Box3Helper( cloudsBox );
-			// scene.add( cloudsBoxHelper );
+      scene.add(stars);
 
-			// -----------------------------------------------------------------
+      stars.position.z = -50;
 
-			var sphereGeo = new THREE.SphereBufferGeometry( 0.2, 32, 16 );
-			var cloudMat = new THREE.MeshPhongMaterial({
-				color: 0xffffff,
-				shininess: 0
-			});
+      // ---------------------------------------------------------------
+      // ---------------------------------------------------------------
 
-			var Cloud = function() {
+      // var mouse = new THREE.Vector2();
+      // var cameraTargetY = 0;
 
-				THREE.Group.call( this );
+      // renderer.domElement.addEventListener('mousemove', mousemove, false);
 
-				// this.add( new THREE.AxesHelper() );
+      // function mousemove(e) {
+      // 	mouse.x = ( e.clientX / window.innerWidth ) * 2 - 1;
+      // 	mouse.y = - ( e.clientY / window.innerHeight ) * 2 + 1;
 
-				this.spheres = [];
+      // 	cameraTargetY = mouse.y * 0.3;
+      // }
 
-				// fill in 3 boxes with a random number of
-				// randomly positioned and randomly scaled spheres
+      // ---------------------------------------------------------------
 
-				// large base
-				var center1 = new THREE.Vector3();
-				var size1 = new THREE.Vector3( 1, 0.25, 0.6 );
-				var number1 = THREE.Math.randInt( 10, 25 );
-				var scaleRange1 = new THREE.Vector2( 0.2, 1 );
-				this.fillBox( center1, size1, number1, scaleRange1 );
+      window.addEventListener('resize', resize, false);
+      function resize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
 
-				// top of cloud
-				var center2 = new THREE.Vector3( 0, size1.y, 0 );
-				var size2 = new THREE.Vector3( 0.5, 0.25, 0.5 );
-				var number2 = THREE.Math.randInt( 5, 15 );
-				var scaleRange2 = new THREE.Vector2( 0.2, 1 );
-				this.fillBox( center2, size2, number2, scaleRange2 );
+      var clock = new THREE.Clock();
 
-				// small tail
-				var center3 = new THREE.Vector3( -0.7, 0, 0 );
-				var size3 = new THREE.Vector3( 0.4, 0.2, 0.25 );
-				var number3 = THREE.Math.randInt( 3, 7 );
-				var scaleRange3 = new THREE.Vector2( 0.1, 0.5 );
-				this.fillBox( center3, size3, number3, scaleRange3 );
+      renderer.setAnimationLoop(loop);
 
-				this.userData.velocity = THREE.Math.randFloat( 0.003, 0.007 );
+      function loop() {
+        // controls.update();
 
-			};
+        var time = clock.getElapsedTime();
 
-			Cloud.prototype = Object.create( THREE.Group.prototype );
-			Cloud.prototype.constructor = Cloud;
+        for (var i = 0; i < clouds.length; i++) {
+          clouds[i].update(time);
+        }
 
-			Cloud.prototype.fillBox = function( center, size, number, scale ){
+        stars.points.material.uniforms.time.value = time;
 
-				var box = new THREE.Box3();
-				box.setFromCenterAndSize( center, size );
+        // lerp( camera.position, 'y', cameraTargetY );
 
-				// var boxHelper = new THREE.Box3Helper( box );
-				// this.add( boxHelper );
+        renderer.render(scene, camera);
+      }
 
-				//
+      // function lerp( object, prop, destination ) {
+      // 	if (object && object[prop] !== destination) {
+      // 		object[prop] += (destination - object[prop]) * 0.04;
 
-				var boxGroup = new THREE.Group();
-				boxGroup.position.copy( center );
-				this.add( boxGroup );
-
-				for ( var i = 0; i < number; i++ ) {
-
-					var sphere = new THREE.Mesh( sphereGeo, cloudMat );
-
-					sphere.position.set(
-						THREE.Math.randFloatSpread( size.x ),
-						THREE.Math.randFloatSpread( size.y ),
-						THREE.Math.randFloatSpread( size.z )
-					);
-
-					// sphere.scale.setScalar( THREE.Math.randFloat( 0.1, 0.1 ) );
-					sphere.userData.scale = THREE.Math.randFloat( scale.x, scale.y );
-					sphere.scale.setScalar( sphere.userData.scale );
-
-					sphere.userData.velocity = THREE.Math.randFloat( 0.001, 0.002 );
-
-					boxGroup.add( sphere );
-					this.spheres.push( sphere );
-
-				}
-
-				return boxGroup;
-
-			};
-
-			Cloud.prototype.update = function( t ){
-
-				// scale individual spheres
-				for ( var i = 0; i < this.spheres.length; i++ ) {
-					var sphere = this.spheres[i];
-					var scaleOffset = Math.sin( t + ( i + 1 ) ) * 0.4 + 1;
-					sphere.scale.setScalar( sphere.userData.scale * scaleOffset );
-				}
-
-				// move entire cloud forward
-				this.position.x += this.userData.velocity;
-
-				// reset cloud position
-				if ( this.position.x > cloudsBox.max.x ) {
-					this.position.x = cloudsBox.min.x;
-				}
-
-			};
-
-			// -----------------------------------------------------------------
-
-			// fill clouds box with clouds
-
-			var clouds = [];
-
-			for ( var i = 0; i < 40; i++ ) {
-
-				var cloud = new Cloud();
-
-				cloud.position.set(
-					THREE.Math.randFloatSpread( cloudsSize.x ),
-					THREE.Math.randFloatSpread( cloudsSize.y ),
-					THREE.Math.randFloatSpread( cloudsSize.z )
-				);
-
-				scene.add( cloud );
-				clouds.push( cloud );
-
-			}
-
-			// -----------------------------------------------------------------
-			// -----------------------------------------------------------------
-
-			// moon
-
-			var MoonShader = {
-
-				uniforms: {
-
-					colorA: { type: 'v3', value: scene.background },
-					colorB: { type: 'v3', value: new THREE.Color('#fff') },
-
-				},
-
-				vertexShader: [
-
-					"varying vec2 vUv;",
-					"void main() {",
-					"	vUv = uv;",
-					"	gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );",
-					"}"
-
-				].join('\n'),
-
-				fragmentShader: [
-
-					"varying vec2 vUv;",
-					"uniform vec3 colorA;",
-					"uniform vec3 colorB;",
-
-					"void main() {",
-					" float pct = smoothstep( 0.39, 0.44, vUv.y );",
-					"	vec3 col = mix( colorA, colorB, pct );",
-					"	gl_FragColor = vec4( col, 1.0 );",
-					"}"
-
-				].join('\n')
-
-			};
-
-			var moonGeo = new THREE.SphereBufferGeometry( 2, 32, 32 );
-			var moonMat = new THREE.ShaderMaterial({
-				uniforms: THREE.UniformsUtils.clone( MoonShader.uniforms ),
-				vertexShader: MoonShader.vertexShader,
-				fragmentShader: MoonShader.fragmentShader,
-			});
-			var moon = new THREE.Mesh( moonGeo, moonMat );
-			moon.position.set( -3, 4, -20 );
-			moon.rotation.set(
-				- Math.PI / 2,
-				- Math.PI / 6,
-				Math.PI / 4,
-			);
-			scene.add( moon );
-
-			// moon.add( new THREE.AxesHelper(2) );
-
-			var moonLight = new THREE.DirectionalLight( 0xffffff, 0.8 );
-			moonLight.position.copy( moon.position );
-			scene.add( moonLight );
-
-			// var mlh =  new THREE.DirectionalLightHelper( moonLight, 0.5 );
-			// scene.add( mlh );
-
-			//
-
-			// key light
-
-			var dLight = new THREE.DirectionalLight( 0xffffff, 0.2 );
-			dLight.position.set( 1, 1, 1 );
-			scene.add( dLight );
-
-			// var dlh =  new THREE.DirectionalLightHelper( dLight, 0.5 );
-			// scene.add( dlh );
-
-			// ---------------------------------------------------------------
-			// ---------------------------------------------------------------
-
-			// stars
-
-			var StarShader = {
-
-				uniforms: {
-
-					color:   { type: 'v3', value: new THREE.Color( 0xffffff ) },
-					texture: { type: 't', value: null },
-					time:    { type: 'f', value: 0 },
-					size:    { type: 'f', value: 500.0 }
-
-				},
-
-				vertexShader: [
-
-					'uniform float time;',
-					'uniform float size;',
-					'attribute float alphaOffset;',
-					'varying float vAlpha;',
-					'uniform vec4 origin;',
-
-					'void main() {',
-
-						'vAlpha = 0.5 * ( 1.0 + sin( alphaOffset + time ) );',
-
-						'vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );',
-						'float cameraDist = distance( mvPosition, origin );',
-						'gl_PointSize = size / cameraDist;',
-						'gl_Position = projectionMatrix * mvPosition;',
-
-					'}'
-
-				].join('\n'),
-
-				fragmentShader: [
-
-					'uniform float time;',
-					'uniform vec3 color;',
-					'uniform sampler2D texture;',
-
-					'varying float vAlpha;',
-
-					'void main() {',
-					'  gl_FragColor = vec4( color, vAlpha );',
-					'  gl_FragColor = gl_FragColor * texture2D( texture, gl_PointCoord );',
-					'}'
-
-				].join('\n')
-			};
-
-			var Stars = function( options ) {
-
-				var color = this.color = options.color || 0x333333;
-				var size = this.size = options.size || 0.4;
-
-				var pointCount = this.pointCount = options.pointCount || 40;
-				var range = this.range = options.range || new THREE.Vector3( 2, 2, 2 );
-
-				THREE.Group.call( this );
-
-				// circle texture
-
-				var canvas = document.createElement('canvas');
-				canvas.width = canvas.height = 128;
-				var ctx = canvas.getContext( '2d' );
-
-				var centerX = canvas.width / 2;
-				var centerY = canvas.height / 2;
-				var radius = canvas.width / 3;
-
-				ctx.beginPath();
-				ctx.arc( centerX, centerY, radius, 0, 2 * Math.PI, false );
-				ctx.fillStyle = '#fff';
-				ctx.fill();
-
-				var texture = new THREE.Texture( canvas );
-				texture.premultiplyAlpha = true;
-				texture.needsUpdate = true;
-
-				//
-
-				StarShader.uniforms.texture.value = texture;
-				StarShader.uniforms.size.value = size;
-
-				var pointsMat = new THREE.ShaderMaterial( {
-					uniforms:       StarShader.uniforms,
-					vertexShader:   StarShader.vertexShader,
-					fragmentShader: StarShader.fragmentShader,
-					blending:       THREE.AdditiveBlending,
-					depthWrite: false,
-					transparent:    true
-				});
-
-				var pointsGeo = new THREE.BufferGeometry();
-
-				var positions = new Float32Array( pointCount * 3 );
-				var alphas = new Float32Array( pointCount );
-
-				for ( var i = 0; i < pointCount; i++ ) {
-
-					positions[ i*3 + 0 ] = THREE.Math.randFloatSpread( range.x );
-					positions[ i*3 + 1 ] = THREE.Math.randFloatSpread( range.y );
-					positions[ i*3 + 2 ] = THREE.Math.randFloatSpread( range.z );
-
-					alphas[ i ] = i;
-
-				}
-
-				pointsGeo.addAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
-				pointsGeo.addAttribute( 'alphaOffset', new THREE.BufferAttribute( alphas, 1 ) );
-
-				var points = this.points = new THREE.Points( pointsGeo, pointsMat );
-				points.sortParticles = true;
-				points.renderOrder = 1;
-
-				this.add( points );
-
-				var box = new THREE.Box3();
-				box.setFromCenterAndSize( points.position, range );
-
-				// var boxHelper = new THREE.Box3Helper( box );
-				// this.add( boxHelper );
-
-			}
-
-			Stars.prototype = Object.create( THREE.Group.prototype );
-			Stars.prototype.constructor = Stars;
-
-			// ---------------------------------------------------------------
-
-			var stars = new Stars({
-				color: 0xffffff,
-				range: new THREE.Vector3( 110, 60, 30 ),
-				pointCount: 400,
-				size: 400,
-				speed: 0.1
-			});
-
-			scene.add( stars );
-
-			stars.position.z = -50;
-
-			// ---------------------------------------------------------------
-			// ---------------------------------------------------------------
-
-			// var mouse = new THREE.Vector2();
-			// var cameraTargetY = 0;
-
-			// renderer.domElement.addEventListener('mousemove', mousemove, false);
-
-			// function mousemove(e) {
-			// 	mouse.x = ( e.clientX / window.innerWidth ) * 2 - 1;
-			// 	mouse.y = - ( e.clientY / window.innerHeight ) * 2 + 1;
-
-			// 	cameraTargetY = mouse.y * 0.3;
-			// }
-
-			// ---------------------------------------------------------------
-
-			window.addEventListener( 'resize', resize, false );
-			function resize() {
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-				renderer.setSize( window.innerWidth, window.innerHeight );
-			}
-
-			var clock = new THREE.Clock();
-
-			renderer.setAnimationLoop( loop );
-
-			function loop() {
-
-				// controls.update();
-
-				var time = clock.getElapsedTime();
-
-				for ( var i = 0; i < clouds.length; i++ ) {
-					clouds[i].update( time );
-				}
-
-				stars.points.material.uniforms.time.value = time;
-
-				// lerp( camera.position, 'y', cameraTargetY );
-
-				renderer.render( scene, camera );
-			}
-
-			// function lerp( object, prop, destination ) {
-			// 	if (object && object[prop] !== destination) {
-			// 		object[prop] += (destination - object[prop]) * 0.04;
-
-			// 		if (Math.abs(destination - object[prop]) < 0.001) {
-			// 			object[prop] = destination;
-			// 		}
-			// 	}
-			// }
-
-		</script>
-
-	</body>
+      // 		if (Math.abs(destination - object[prop]) < 0.001) {
+      // 			object[prop] = destination;
+      // 		}
+      // 	}
+      // }
+    </script>
+  </body>
 </html>

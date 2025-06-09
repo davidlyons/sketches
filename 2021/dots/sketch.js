@@ -1,5 +1,5 @@
-import * as THREE from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r129/build/three.module.js';
-// import { OrbitControls } from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r129/examples/jsm/controls/OrbitControls.js';
+import * as THREE from 'three';
+// import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 const container = document.getElementById('container');
 
@@ -20,7 +20,7 @@ camera.position.set(0, 0, 3);
 // controls.screenSpacePanning = true;
 
 // lights
-const dLight = new THREE.DirectionalLight(0xffffff, 0.5);
+const dLight = new THREE.DirectionalLight(0xffffff, 3);
 dLight.position.set(-1, 1, 1);
 scene.add(dLight);
 
@@ -31,7 +31,7 @@ scene.add(aLight);
 
 // large center sphere
 
-const sphereGeo = new THREE.SphereBufferGeometry(0.5, 32, 16);
+const sphereGeo = new THREE.SphereGeometry(0.5, 32, 16);
 // const sphereMat = new THREE.MeshBasicMaterial({ color: 0x1f1f1f }); // flat
 const sphereMat = new THREE.MeshPhongMaterial({ color: 0x1f1f1f });
 const sphere = new THREE.Mesh(sphereGeo, sphereMat);
@@ -72,8 +72,8 @@ for (var i = 0; i <= 6; i++) {
   dot.add(pLight);
 }
 
-line.rotation.x = THREE.Math.degToRad(-50);
-line.rotation.y = THREE.Math.degToRad(-50);
+line.rotation.x = THREE.MathUtils.degToRad(-50);
+line.rotation.y = THREE.MathUtils.degToRad(-50);
 
 // ---------------------------------------------------------------
 

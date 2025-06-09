@@ -1,344 +1,334 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<!-- Global site tag (gtag.js) - Google Analytics -->
-		<script async src="https://www.googletagmanager.com/gtag/js?id=G-WTY198QNED"></script>
-		<script src="../../ga.js"></script>
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WTY198QNED"></script>
+    <script src="../../ga.js"></script>
+
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+
+    <title>Carrot</title>
+
+    <link href="../../info.css" rel="stylesheet" />
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        overflow: hidden;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+        font-size: 13px;
+        line-height: 20px;
+        color: #333;
+        background: #bbb;
+        cursor: pointer;
+      }
+
+      #webglmessage {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        margin-left: -200px !important;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="container"></div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/",
+          "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.177.0/+esm"
+        }
+      }
+    </script>
+
+    <script src="../../info.js"></script>
+
+    <script type="module">
+      import * as THREE from 'three';
+      import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+      import TWEEN from 'three/addons/libs/tween.module.js';
+
+      var info = new Info(
+        'Carrot',
+        ['Codevember 2018, Day 3', '<a href="https://davidlyons.dev">David Lyons</a>'].join('<br>')
+      );
+
+      var container = document.getElementById('container');
+
+      var renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      container.appendChild(renderer.domElement);
+
+      var camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, 1.2, 3);
+
+      // var controls = new THREE.OrbitControls( camera, renderer.domElement );
+      // controls.screenSpacePanning = true;
+      // controls.target.y = 1;
+
+      var scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x9cd5ff);
+
+      // lights
+      var aLight = new THREE.AmbientLight(0x68503a);
+      scene.add(aLight);
+
+      var dLight = new THREE.DirectionalLight(0xffffff, 3);
+      dLight.position.set(1, 0.5, 1);
+      scene.add(dLight);
+
+      // var dlh = new THREE.DirectionalLightHelper( dLight, 0.4 );
+      // scene.add( dlh );
+
+      // var gh = new THREE.GridHelper( 2, 10, 0x000000, 0x808080 );
+      // scene.add( gh );
+
+      // ---------------------------------------------------------------
 
-		<meta charset="utf-8">
-		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<meta name="description" content="">
-		<meta name="author" content="">
+      class Carrot extends THREE.Group {
+        constructor() {
+          super();
 
-		<title>Carrot</title>
+          // orange
 
-		<link href="../../info.css" rel="stylesheet">
+          var carrotPath = new THREE.Path();
+          carrotPath.quadraticCurveTo(2, 3, 2.5, 15);
+          carrotPath.quadraticCurveTo(2.7, 18, 0, 18);
+          var carrotPoints = carrotPath.getPoints();
 
-		<style>
-			* { box-sizing: border-box; }
+          var carrotGeo = new THREE.LatheGeometry(carrotPoints, 16);
 
-			html { overflow: hidden; }
+          var carrotMat = new THREE.MeshToonMaterial({
+            color: 0xff7800,
+          });
+          var carrotMesh = new THREE.SkinnedMesh(carrotGeo, carrotMat);
+          carrotMesh.scale.setScalar(0.1);
+          this.add(carrotMesh);
 
-			body {
-				margin: 0;
-				padding: 0;
-				overflow: hidden;
-				font-family: Arial, sans-serif;
-				font-size: 13px;
-				line-height: 20px;
-				color: #333;
-				background: #bbb;
-				cursor: pointer;
-			}
+          // skin weights
 
-			#webglmessage {
-				position: absolute;
-				top: 0;
-				left: 50%;
-				margin-left: -200px !important;
-			}
-		</style>
+          var segmentHeight = 2;
+          const posAttr = carrotGeo.attributes.position;
+          const vertexCount = posAttr.count;
 
-	</head>
+          const skinIndices = [];
+          const skinWeights = [];
 
-	<body>
+          for (let i = 0; i < vertexCount; i++) {
+            const y = Math.max(posAttr.getY(i), 0.01);
 
-		<div id="container"></div>
+            const skinIndex = Math.floor(y / segmentHeight);
+            const skinWeight = (y % segmentHeight) / segmentHeight;
 
-		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/build/three.js"></script>
-		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/examples/js/controls/OrbitControls.js"></script>
-		<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/examples/js/WebGL.js"></script>
-		<!-- <script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r98/examples/js/loaders/FBXLoader.js"></script> -->
-		<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.3/dat.gui.min.js"></script> -->
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.2.0/Tween.min.js"></script>
+            skinIndices.push(skinIndex, skinIndex + 1, 0, 0);
+            skinWeights.push(1 - skinWeight, skinWeight, 0, 0);
+          }
 
-		<script src="../../info.js"></script>
+          // Add as attributes
+          carrotGeo.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndices, 4));
+          carrotGeo.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeights, 4));
 
-		<script>
+          // skeleton bones
 
-			if ( WEBGL.isWebGLAvailable() === false ) {
-				document.body.appendChild( WEBGL.getWebGLErrorMessage() );
-			}
+          var bones = (this.bones = []);
+          var prevBone = new THREE.Bone();
+          bones.push(prevBone);
 
-			var info = new Info(
-				'Carrot',
-				[
-					'Codevember 2018, Day 3',
-					'<a href="https://davidlyons.dev">David Lyons</a>'
-				].join('<br>')
-			);
+          for (var i = 0; i < 9; i++) {
+            var bone = new THREE.Bone();
+            bone.position.y = segmentHeight;
+            bones.push(bone);
+            prevBone.add(bone);
+            prevBone = bone;
+          }
 
-			var container = document.getElementById( 'container' );
+          var skeleton = new THREE.Skeleton(bones);
 
-			var renderer = new THREE.WebGLRenderer({ antialias: true });
-			renderer.setPixelRatio( window.devicePixelRatio );
-			renderer.setSize( window.innerWidth, window.innerHeight );
-			container.appendChild( renderer.domElement );
+          carrotMesh.add(bones[0]);
+          carrotMesh.bind(skeleton);
 
-			var camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, .1, 1000 );
-			camera.position.set( 0, 1.2, 3 );
+          //
 
-			// var controls = new THREE.OrbitControls( camera, renderer.domElement );
-			// controls.screenSpacePanning = true;
-			// controls.target.y = 1;
+          var skeletonHelper = new THREE.SkeletonHelper(carrotMesh);
+          scene.add(skeletonHelper);
+          skeletonHelper.visible = false;
+          this.skeletonHelper = skeletonHelper;
 
-			var scene = new THREE.Scene();
-			scene.background = new THREE.Color( 0x9cd5ff );
+          // stem
 
-			// lights
-			var aLight = new THREE.AmbientLight( 0x68503a );
-			scene.add( aLight );
+          var stemGroup = new THREE.Group();
+          bones[bones.length - 1].add(stemGroup);
 
-			var dLight = new THREE.DirectionalLight( 0xffffff, 0.8 );
-			dLight.position.set( 1, 0.5, 1 );
-			scene.add( dLight );
+          var stemPath = new THREE.Path();
+          stemPath.quadraticCurveTo(1, 2, 0, 6);
+          var stemPoints = stemPath.getPoints();
 
-			// var dlh = new THREE.DirectionalLightHelper( dLight, 0.4 );
-			// scene.add( dlh );
+          var stemGeo = new THREE.LatheGeometry(stemPoints, 16);
+          var stemMat = new THREE.MeshToonMaterial({
+            color: 0x049e00,
+          });
 
-			// var gh = new THREE.GridHelper( 2, 10, 0x000000, 0x808080 );
-			// scene.add( gh );
+          var stem = new THREE.Mesh(stemGeo, stemMat);
+          stemGroup.add(stem);
 
-			// ---------------------------------------------------------------
+          var stem2 = stem.clone();
+          stem2.rotation.x = Math.PI / 7;
+          stemGroup.add(stem2);
 
-			var Carrot = function() {
-				THREE.Group.call( this );
+          var stem3 = stem.clone();
+          stem3.rotation.z = Math.PI / 6;
+          stem3.rotation.x = -Math.PI / 8;
+          stemGroup.add(stem3);
 
-				// orange
+          var stem4 = stem.clone();
+          stem4.rotation.z = -Math.PI / 6;
+          stem4.rotation.x = -Math.PI / 8;
+          stemGroup.add(stem4);
 
-				var carrotPath = new THREE.Path();
-				carrotPath.quadraticCurveTo( 2, 3, 2.5, 15 );
-				carrotPath.quadraticCurveTo( 2.7, 18, 0, 18 );
-				var carrotPoints = carrotPath.getPoints()
+          // eyes
 
-				var carrotGeo = new THREE.LatheGeometry( carrotPoints, 16 );
+          var eyeGeo = new THREE.SphereGeometry(0.5);
+          var eyeMat = new THREE.MeshToonMaterial({
+            color: 0xffffff,
+          });
 
-				var carrotMat = new THREE.MeshToonMaterial({
-					color: 0xff7800,
-					shininess: 2,
-					skinning: true
-				});
-				var carrotMesh = new THREE.SkinnedMesh( carrotGeo, carrotMat );
-				carrotMesh.scale.setScalar( 0.1 );
-				this.add( carrotMesh );
+          var eyeR = new THREE.Mesh(eyeGeo, eyeMat);
+          eyeR.position.z = 2.2;
+          eyeR.position.x = -0.8;
+          eyeR.scale.y = 1.5;
 
-				// skin weights
+          var pupilMat = new THREE.MeshPhongMaterial({
+            color: 0x444444,
+            shininess: 90,
+            specular: 0xffffff,
+          });
 
-				var segmentHeight = 2;
+          var pupil = new THREE.Mesh(eyeGeo, pupilMat);
+          pupil.scale.setScalar(0.6);
+          pupil.position.z = 0.3;
+          eyeR.add(pupil);
 
-				for ( var i = 0; i < carrotGeo.vertices.length; i ++ ) {
+          var eyeL = eyeR.clone();
+          eyeL.position.x = 1;
 
-					var vertex = carrotGeo.vertices[ i ];
-					var y = Math.max(vertex.y, 0.01);
+          bones[7].add(eyeL, eyeR);
 
-					var skinIndex = Math.floor( y / segmentHeight );
-					var skinWeight = ( y % segmentHeight ) / segmentHeight;
+          // mouth
 
-					carrotGeo.skinIndices.push( new THREE.Vector4( skinIndex, skinIndex + 1, 0, 0 ) );
-					carrotGeo.skinWeights.push( new THREE.Vector4( 1 - skinWeight, skinWeight, 0, 0 ) );
+          var mouthShape = new THREE.Shape();
+          mouthShape.moveTo(-4, 0);
+          mouthShape.quadraticCurveTo(0, -1, 4, 0);
+          mouthShape.quadraticCurveTo(3.5, -3, 0, -3);
+          mouthShape.quadraticCurveTo(-3.5, -3, -4, 0);
 
-				}
+          var mouthGeo = new THREE.ShapeGeometry(mouthShape);
+          var mouthMat = new THREE.MeshBasicMaterial({ color: 0x5e2f00 });
+          var mouth = new THREE.Mesh(mouthGeo, mouthMat);
+          mouth.scale.setScalar(0.4);
+          mouth.position.z = 2.4;
 
-				// skeleton bones
+          bones[6].add(mouth);
+        }
 
-				var bones = this.bones = [];
-				var prevBone = new THREE.Bone();
-				bones.push( prevBone );
+        updateRotation(rotation) {
+          var bones = this.bones;
 
-				for ( var i = 0; i < 9; i++ ) {
+          for (var i = 0; i < bones.length; i++) {
+            bones[i].rotation.z = rotation;
+          }
+        }
 
-					var bone = new THREE.Bone();
-					bone.position.y = segmentHeight;
-					bones.push( bone );
-					prevBone.add( bone );
-					prevBone = bone;
+        updatePosition(position) {
+          var bones = this.bones;
 
-				}
+          for (var i = 1; i < bones.length; i++) {
+            bones[i].position.y = position;
+          }
 
-				var skeleton = new THREE.Skeleton( bones );
+          bones[0].scale.x = ((2 / position) * 2) / position;
+          bones[0].scale.z = ((2 / position) * 2) / position;
+        }
+      }
 
-				carrotMesh.add( bones[ 0 ] );
-				carrotMesh.bind( skeleton );
+      // ----------------------------------------------------------------
 
-				//
+      var carrot = new Carrot();
+      scene.add(carrot);
 
-				var skeletonHelper = new THREE.SkeletonHelper( carrotMesh );
-				scene.add( skeletonHelper );
-				skeletonHelper.visible = false;
-				this.skeletonHelper = skeletonHelper;
+      var mouse = new THREE.Vector2();
 
-				// stem
+      function mousemove(event) {
+        var e = (event.touches && event.touches[0]) || event;
+        mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
 
-				var stemGroup = new THREE.Group();
-				bones[ bones.length - 1 ].add( stemGroup );
+        carrot.updateRotation((-mouse.x * Math.PI) / 32);
+        carrot.updatePosition(mouse.y * 0.4 + 2);
+      }
 
-				var stemPath = new THREE.Path();
-				stemPath.quadraticCurveTo( 1, 2, 0, 6 );
-				var stemPoints = stemPath.getPoints()
+      var target = { y: 2 * Math.PI };
 
-				var stemGeo = new THREE.LatheBufferGeometry( stemPoints, 16 );
-				var stemMat = new THREE.MeshToonMaterial({
-					color: 0x049e00,
-					shininess: 2
-				});
+      var tween = new TWEEN.Tween(carrot.rotation)
+        .to(target, 500)
+        .easing(TWEEN.Easing.Quadratic.InOut)
+        .onComplete(function () {
+          carrot.rotation.y = 0;
+        });
 
-				var stem = new THREE.Mesh( stemGeo, stemMat );
-				stemGroup.add( stem );
+      function mousedown(event) {
+        event.preventDefault();
 
-				var stem2 = stem.clone();
-				stem2.rotation.x = Math.PI / 7;
-				stemGroup.add( stem2 );
+        if (!tween.isPlaying()) {
+          var dir = Math.random() < 0.5 ? -1 : 1;
+          target.y *= dir;
+          tween.to(target);
 
-				var stem3 = stem.clone();
-				stem3.rotation.z = Math.PI / 6;
-				stem3.rotation.x = - Math.PI / 8;
-				stemGroup.add( stem3 );
+          tween.start();
+        }
+      }
 
-				var stem4 = stem.clone();
-				stem4.rotation.z = -Math.PI / 6;
-				stem4.rotation.x = - Math.PI / 8;
-				stemGroup.add( stem4 );
+      renderer.domElement.addEventListener('mousemove', mousemove, false);
+      renderer.domElement.addEventListener('mousedown', mousedown, false);
 
-				// eyes
+      renderer.domElement.addEventListener('touchmove', mousemove, false);
+      renderer.domElement.addEventListener('touchstart', mousedown, false);
 
-				var eyeGeo = new THREE.SphereBufferGeometry(0.5);
-				var eyeMat = new THREE.MeshToonMaterial({
-					color: 0xffffff
-				});
+      // ---------------------------------------------------------------
 
-				var eyeR = new THREE.Mesh( eyeGeo, eyeMat );
-				eyeR.position.z = 2.2;
-				eyeR.position.x = -0.8;
-				eyeR.scale.y = 1.5;
+      window.addEventListener('resize', resize, false);
+      function resize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
 
-				var pupilMat = new THREE.MeshToonMaterial({
-					color: 0x444444,
-					shininess: 100,
-					specular: 0xffffff
-				});
+      renderer.setAnimationLoop(loop);
 
-				var pupil = new THREE.Mesh( eyeGeo, pupilMat );
-				pupil.scale.setScalar(0.6);
-				pupil.position.z = .3;
-				eyeR.add( pupil );
+      function loop() {
+        // controls.update();
 
-				var eyeL = eyeR.clone();
-				eyeL.position.x = 1;
+        TWEEN.update();
 
-				bones[7].add( eyeL, eyeR );
-
-				// mouth
-
-				var mouthShape = new THREE.Shape();
-				mouthShape.moveTo( -4, 0 );
-				mouthShape.quadraticCurveTo( 0, -1, 4, 0 );
-				mouthShape.quadraticCurveTo( 3.5, -3, 0, -3 );
-				mouthShape.quadraticCurveTo( -3.5, -3, -4, 0 );
-
-				var mouthGeo = new THREE.ShapeBufferGeometry( mouthShape );
-				var mouthMat = new THREE.MeshBasicMaterial({ color: 0x5e2f00 });
-				var mouth = new THREE.Mesh( mouthGeo, mouthMat );
-				mouth.scale.setScalar( 0.4 )
-				mouth.position.z = 2.4;
-
-				bones[6].add( mouth );
-
-			}
-
-			Carrot.prototype = Object.create( THREE.Group.prototype );
-			Carrot.prototype.constructor = Carrot;
-
-			Carrot.prototype.updateRotation = function( rotation ) {
-
-				var bones = this.bones;
-
-				for (var i = 0; i < bones.length; i++) {
-					bones[i].rotation.z = rotation;
-				}
-
-			};
-
-			Carrot.prototype.updatePosition = function( position ) {
-
-				var bones = this.bones;
-
-				for (var i = 1; i < bones.length; i++) {
-					bones[i].position.y = position;
-				}
-
-				bones[0].scale.x = 2 / position * 2 / position;
-				bones[0].scale.z = 2 / position * 2 / position;
-
-			};
-
-			// ----------------------------------------------------------------
-
-			var carrot = new Carrot();
-			scene.add( carrot );
-
-			var mouse = new THREE.Vector2();
-
-			function mousemove( event ){
-				var e = event.touches && event.touches[0] || event;
-				mouse.x = ( e.clientX / window.innerWidth ) * 2 - 1;
-				mouse.y = - ( e.clientY / window.innerHeight ) * 2 + 1;
-
-				carrot.updateRotation( - mouse.x * Math.PI / 32 );
-				carrot.updatePosition( mouse.y * 0.4 + 2 );
-			}
-
-			var target = { y: 2 * Math.PI };
-
-			var tween = new TWEEN.Tween( carrot.rotation )
-				.to( target, 500 )
-				.easing( TWEEN.Easing.Quadratic.InOut )
-				.onComplete(function(){
-					carrot.rotation.y = 0;
-				});
-
-			function mousedown( event ){
-
-				event.preventDefault();
-
-				if ( !tween.isPlaying() ) {
-
-					var dir = Math.random() < 0.5 ? -1 : 1;
-					target.y *= dir;
-					tween.to( target );
-
-					tween.start();
-				}
-
-			}
-
-			renderer.domElement.addEventListener('mousemove', mousemove, false);
-			renderer.domElement.addEventListener('mousedown', mousedown, false);
-
-			renderer.domElement.addEventListener('touchmove', mousemove, false);
-			renderer.domElement.addEventListener('touchstart', mousedown, false);
-
-			// ---------------------------------------------------------------
-
-			window.addEventListener( 'resize', resize, false );
-			function resize() {
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-				renderer.setSize( window.innerWidth, window.innerHeight );
-			}
-
-			renderer.setAnimationLoop( loop );
-
-			function loop() {
-
-				// controls.update();
-
-				TWEEN.update();
-
-				renderer.render( scene, camera );
-			}
-
-		</script>
-
-	</body>
+        renderer.render(scene, camera);
+      }
+    </script>
+  </body>
 </html>

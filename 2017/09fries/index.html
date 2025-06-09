@@ -40,17 +40,26 @@
   <body>
     <div id="container"></div>
 
-    <script src="https://cdn.rawgit.com/mrdoob/three.js/r89/build/three.js"></script>
-    <script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/modifiers/BufferSubdivisionModifier.js"></script>
-    <script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/Detector.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.1.1/Tween.min.js"></script>
-    <script src="https://cdn.rawgit.com/mrdoob/texgen.js/master/src/TexGen.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/",
+          "three-subdivide": "https://cdn.jsdelivr.net/npm/three-subdivide@1.1.2/build/index.module.js"
+        }
+      }
+    </script>
 
+    <script src="https://cdn.jsdelivr.net/gh/mrdoob/texgen.js@master/src/TexGen.js"></script>
     <script src="../../info.js"></script>
 
-    <script>
-      if (!Detector.webgl) Detector.addGetWebGLMessage();
+    <script type="module">
+      import * as THREE from 'three';
+      import { LoopSubdivision } from 'three-subdivide';
+      import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+      import TWEEN from 'three/addons/libs/tween.module.js';
+      import * as SceneUtils from 'three/addons/utils/SceneUtils.js';
+      import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
       var info = new Info(
         'French Fries',
@@ -64,23 +73,23 @@
           alpha: { type: 'f', value: 1.0 },
         },
 
-        vertexShader: [
-          'uniform float offset;',
+        vertexShader: `
+          uniform float offset;
 
-          'void main() {',
-          '  vec4 pos = modelViewMatrix * vec4( position + normal * offset, 1.0 );',
-          '  gl_Position = projectionMatrix * pos;',
-          '}',
-        ].join('\n'),
+          void main() {
+            vec4 pos = modelViewMatrix * vec4( position + normal * offset, 1.0 );
+            gl_Position = projectionMatrix * pos;
+          }
+        `,
 
-        fragmentShader: [
-          'uniform vec3 color;',
-          'uniform float alpha;',
+        fragmentShader: `
+          uniform vec3 color;
+          uniform float alpha;
 
-          'void main() {',
-          '  gl_FragColor = vec4( color, alpha );',
-          '}',
-        ].join('\n'),
+          void main() {
+            gl_FragColor = vec4( color, alpha );
+          }
+        `,
       };
 
       var container = document.getElementById('container');
@@ -95,7 +104,7 @@
       var camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100000);
       camera.position.set(0, 0.9, 2.8);
 
-      var controls = new THREE.OrbitControls(camera, renderer.domElement);
+      var controls = new OrbitControls(camera, renderer.domElement);
       controls.enabled = false;
 
       var scene = new THREE.Scene();
@@ -103,7 +112,7 @@
       var aLight = new THREE.AmbientLight(0x555555);
       scene.add(aLight);
 
-      var dLight = new THREE.DirectionalLight(0xffffff, 0.5);
+      var dLight = new THREE.DirectionalLight(0xffffff, 2);
       dLight.position.set(1, 0.7, 0.8);
       scene.add(dLight);
 
@@ -131,7 +140,6 @@
 
       var cupMat = new THREE.MeshToonMaterial({
         color: 0xffffff,
-        shininess: 1,
       });
 
       var cupOutlineMat = new THREE.ShaderMaterial({
@@ -142,7 +150,7 @@
       });
       cupOutlineMat.uniforms.offset.value = 0.015;
 
-      var cup = THREE.SceneUtils.createMultiMaterialObject(cupGeo, [cupMat, cupOutlineMat]);
+      var cup = SceneUtils.createMultiMaterialObject(cupGeo, [cupMat, cupOutlineMat]);
       cup.position.y = -0.6;
       scene.add(cup);
       // cup.add( new THREE.AxesHelper(1) );
@@ -171,8 +179,7 @@
       //
 
       var fryGeo = new THREE.BoxGeometry(0.2, 1, 0.2, 2, 10, 2);
-      var modifier = new THREE.BufferSubdivisionModifier(1);
-      fryGeo = modifier.modify(fryGeo);
+      fryGeo = LoopSubdivision.modify(fryGeo, 1);
 
       // var fryMat = new THREE.MeshPhongMaterial({
       // 	color: 0xffe371,
@@ -187,10 +194,9 @@
       var fryMat = new THREE.MeshToonMaterial({
         color: 0xffe371,
         emissive: 0xac2e0c,
-        shininess: 5,
         // map: texture,
         bumpMap: texture,
-        bumpScale: 0.002,
+        bumpScale: 0.3,
         transparent: true,
         opacity: 0,
       });
@@ -202,6 +208,7 @@
         side: THREE.BackSide,
         transparent: true,
       });
+      outlineMat.uniforms.offset.value = 0.008;
       outlineMat.uniforms.color.value.setHex(0xe83d0f);
       outlineMat.uniforms.alpha.value = 0;
 
@@ -217,15 +224,15 @@
           fry.add(outline);
 
           fry.position.set(
-            THREE.Math.randFloatSpread(1),
-            THREE.Math.randFloatSpread(0.1),
-            THREE.Math.randFloatSpread(0.5)
+            THREE.MathUtils.randFloatSpread(1),
+            THREE.MathUtils.randFloatSpread(0.1),
+            THREE.MathUtils.randFloatSpread(0.5)
           );
 
           fry.rotation.set(
-            THREE.Math.randFloatSpread(THREE.Math.degToRad(10)),
-            THREE.Math.randFloatSpread(THREE.Math.degToRad(20)),
-            THREE.Math.randFloatSpread(THREE.Math.degToRad(30))
+            THREE.MathUtils.randFloatSpread(THREE.MathUtils.degToRad(10)),
+            THREE.MathUtils.randFloatSpread(THREE.MathUtils.degToRad(20)),
+            THREE.MathUtils.randFloatSpread(THREE.MathUtils.degToRad(30))
           );
 
           fry.scale.set(1, Math.random() * 0.5 + 1, Math.random() * 0.3 + 0.7);
@@ -265,7 +272,7 @@
 
         // remove a random fry
 
-        var i = THREE.Math.randInt(0, fries.length - 1);
+        var i = THREE.MathUtils.randInt(0, fries.length - 1);
         var fry = fries[i];
         fries.splice(i, 1);
 

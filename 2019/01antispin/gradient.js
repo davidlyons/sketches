@@ -1,6 +1,6 @@
-import * as THREE from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r109/build/three.module.js';
-// import { OrbitControls } from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r109/examples/jsm/controls/OrbitControls.js';
-import { TWEEN } from 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@r109/examples/jsm/libs/tween.module.min.js';
+import * as THREE from 'three';
+// import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import TWEEN from 'three/addons/libs/tween.module.js';
 
 const container = document.getElementById('container');
 
@@ -189,7 +189,7 @@ antispinMesh.add(outlineMesh);
 
 // 3 moving poi
 
-var poiGeo = new THREE.SphereBufferGeometry(0.2, 32, 32);
+var poiGeo = new THREE.SphereGeometry(0.2, 32, 32);
 var poiMat = new THREE.MeshBasicMaterial({
   color: 0x000000,
   transparent: true,
@@ -216,7 +216,7 @@ var seedGroup = new THREE.Group();
 seedGroup.position.z = -1;
 scene.add(seedGroup);
 
-var circleGeo = new THREE.RingBufferGeometry(radius - width, radius + width, 64);
+var circleGeo = new THREE.RingGeometry(radius - width, radius + width, 64);
 var circleMat = new THREE.MeshBasicMaterial({
   color: 0xcccccc,
   side: THREE.DoubleSide,

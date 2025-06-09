@@ -1,298 +1,289 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<!-- Global site tag (gtag.js) - Google Analytics -->
-		<script async src="https://www.googletagmanager.com/gtag/js?id=G-WTY198QNED"></script>
-		<script src="../../ga.js"></script>
+  <head>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-WTY198QNED"></script>
+    <script src="../../ga.js"></script>
+
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+
+    <title>Cake</title>
+
+    <link href="../../info.css" rel="stylesheet" />
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        overflow: hidden;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+        font-size: 13px;
+        line-height: 20px;
+        color: #333;
+        background: #dcdcb5;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="container"></div>
+
+    <script src="https://cdn.rawgit.com/mrdoob/three.js/r89/build/three.js"></script>
+    <script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/Detector.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.1.1/Tween.min.js"></script>
+
+    <script src="../../info.js"></script>
+
+    <script>
+      if (!Detector.webgl) Detector.addGetWebGLMessage();
+
+      var info = new Info(
+        'Cake',
+        ['Codevember 2017, Day 2', '<a href="https://davidlyons.dev">David Lyons</a>'].join('<br>')
+      );
+
+      // -----------------------------------------------------------------
+
+      var OutlineShader = {
+        uniforms: {
+          offset: { type: 'f', value: 0.1 },
+        },
+
+        vertexShader: `
+					uniform float offset;
+
+					void main() {
+					  vec4 pos = modelViewMatrix * vec4( position + normal * offset, 1.0 );
+					  gl_Position = projectionMatrix * pos;
+					}
+				`,
+
+        fragmentShader: `
+					void main() {
+					  gl_FragColor = vec4( 80.0 / 255.0, 0.0, 0.0, 1.0 );
+					}
+				`,
+      };
+
+      // -----------------------------------------------------------------
+
+      var Cake = function (color) {
+        THREE.Object3D.call(this);
+
+        var cakeGeo = new THREE.CylinderGeometry(1, 1, 2, 3, 3);
+        cakeGeo.scale(1, 1, 1.5);
+        // cakeGeo.computeFlatVertexNormals();
+        cakeGeo.computeVertexNormals();
+
+        // assign frosting to backside of height
+        for (var i = 6; i <= 11; i++) {
+          cakeGeo.faces[i].materialIndex = 1;
+        }
+
+        // assign frosting to middle layer
+        [2, 3, 14, 15].forEach(function (i) {
+          cakeGeo.faces[i].materialIndex = 1;
+        });
+
+        // cakeGeo.elementsNeedUpdate = true;
+
+        // vertex colors for half of middle layer
+        var gray = new THREE.Color(0xbbbbbb);
+        cakeGeo.faces[2].color = gray;
+        cakeGeo.faces[3].color = gray;
 
-		<meta charset="utf-8">
-		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<meta name="description" content="">
-		<meta name="author" content="">
+        // shrink middle layer
+        for (var i = 3; i <= 5; i++) {
+          cakeGeo.vertices[i].y -= 0.2;
+        }
 
-		<title>Cake</title>
+        for (var i = 6; i <= 8; i++) {
+          cakeGeo.vertices[i].y += 0.2;
+        }
+
+        var redVelvetMat = new THREE.MeshBasicMaterial({
+          color: color || 0xbb0000,
+        });
 
-		<link href="../../info.css" rel="stylesheet">
-		
-		<style>
-			* { box-sizing: border-box; }
+        var frostingMat = new THREE.MeshBasicMaterial({
+          color: 0xffffff,
+          vertexColors: THREE.FaceColors,
+        });
 
-			html { overflow: hidden; }
+        var cakeMat = [redVelvetMat, frostingMat, redVelvetMat];
 
-			body {
-				margin: 0;
-				padding: 0;
-				overflow: hidden;
-				font-family: Arial, sans-serif;
-				font-size: 13px;
-				line-height: 20px;
-				color: #333;
-				background: #dcdcb5;
-			}
-		</style>
+        var outlineMat = new THREE.ShaderMaterial({
+          uniforms: THREE.UniformsUtils.clone(OutlineShader.uniforms),
+          vertexShader: OutlineShader.vertexShader,
+          fragmentShader: OutlineShader.fragmentShader,
+        });
+        outlineMat.side = THREE.BackSide;
+        // outlineMat.depthWrite = false;
 
-	</head>
+        var cakeMesh = new THREE.Mesh(cakeGeo, cakeMat);
+        this.add(cakeMesh);
 
-	<body>
+        var cakeOutlineMesh = new THREE.Mesh(cakeGeo, outlineMat);
+        this.add(cakeOutlineMesh);
 
-		<div id="container"></div>
+        // var cakeMesh = THREE.SceneUtils.createMultiMaterialObject( cakeGeo, [ cakeMat, outlineMat ] );
+        // scene.add( cakeMesh );
 
-		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/build/three.js"></script>
-		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/controls/OrbitControls.js"></script>
-		<script src="https://cdn.rawgit.com/mrdoob/three.js/r89/examples/js/Detector.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.1.1/Tween.min.js"></script>
+        // var wireframe = new THREE.WireframeGeometry( cakeGeo );
+        // var line = new THREE.LineSegments( wireframe );
+        // line.material.color.setHex( 0x000000 );
+        // cakeMesh.add( line );
+
+        // cherry
+
+        var cherryGeo = new THREE.SphereBufferGeometry(0.22);
+        var cherryMat = new THREE.MeshToonMaterial({
+          color: 0xff0000,
+          specular: 0xffffff,
+          shininess: 100,
+        });
+
+        var cherryOutline = outlineMat.clone();
+        cherryOutline.uniforms.offset.value = 0.07;
+        cherryOutline.depthWrite = false;
+        var cherryMats = [cherryMat, cherryOutline];
+        cherry = this.cherry = THREE.SceneUtils.createMultiMaterialObject(cherryGeo, cherryMats);
+        cherry.children[1].renderOrder = -1;
+
+        this.cherryAirY = 3;
+        cherry.position.y = this.cherryAirY; // above cake
+        this.add(cherry);
 
-		<script src="../../info.js"></script>
-
-		<script>
-
-			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
-
-			var info = new Info(
-				'Cake',
-				['Codevember 2017, Day 2',
-				'<a href="https://davidlyons.dev">David Lyons</a>'].join('<br>')
-			);
-
-			// -----------------------------------------------------------------
-
-			var OutlineShader = {
-
-				uniforms: {
-				  offset: { type: 'f', value: 0.1 }
-				},
-
-				vertexShader: [
-
-					"uniform float offset;",
-
-					"void main() {",
-					"  vec4 pos = modelViewMatrix * vec4( position + normal * offset, 1.0 );",
-					"  gl_Position = projectionMatrix * pos;",
-					"}"
-
-				].join('\n'),
-
-				fragmentShader: [
-
-					"void main() {",
-					"  gl_FragColor = vec4( 80.0 / 255.0, 0.0, 0.0, 1.0 );",
-					"}"
-
-				].join('\n')
-
-			};
-
-			// -----------------------------------------------------------------
-
-			var Cake = function( color ) {
-				THREE.Object3D.call( this );
-
-				var cakeGeo = new THREE.CylinderGeometry( 1, 1, 2, 3, 3 );
-				cakeGeo.scale( 1, 1, 1.5 );
-				// cakeGeo.computeFlatVertexNormals();
-				cakeGeo.computeVertexNormals();
-				
-				// assign frosting to backside of height
-				for (var i= 6; i <= 11; i++) {
-					cakeGeo.faces[i].materialIndex = 1;
-				}
-
-				// assign frosting to middle layer
-				[2,3,14,15].forEach(function(i){
-					cakeGeo.faces[i].materialIndex = 1;
-				});
-
-				// cakeGeo.elementsNeedUpdate = true;
-
-				// vertex colors for half of middle layer
-				var gray = new THREE.Color( 0xbbbbbb );
-				cakeGeo.faces[2].color = gray;
-				cakeGeo.faces[3].color = gray;
-
-				// shrink middle layer
-				for ( var i = 3; i <= 5; i++) {
-					cakeGeo.vertices[i].y -= 0.2;
-				}
-
-				for ( var i = 6; i <= 8; i++) {
-					cakeGeo.vertices[i].y += 0.2;
-				}
-
-				var redVelvetMat = new THREE.MeshBasicMaterial({
-					color: color || 0xbb0000
-				});
-				
-				var frostingMat = new THREE.MeshBasicMaterial({
-					color: 0xffffff,
-					vertexColors: THREE.FaceColors
-				});
-
-				var cakeMat = [ redVelvetMat, frostingMat, redVelvetMat ];
-
-				var outlineMat = new THREE.ShaderMaterial({
-					uniforms: THREE.UniformsUtils.clone( OutlineShader.uniforms ),
-					vertexShader: OutlineShader.vertexShader,
-					fragmentShader: OutlineShader.fragmentShader
-				});
-				outlineMat.side = THREE.BackSide;
-				// outlineMat.depthWrite = false;
-
-				var cakeMesh = new THREE.Mesh( cakeGeo, cakeMat );
-				this.add( cakeMesh );
-
-				var cakeOutlineMesh = new THREE.Mesh( cakeGeo, outlineMat );
-				this.add( cakeOutlineMesh );
-
-				// var cakeMesh = THREE.SceneUtils.createMultiMaterialObject( cakeGeo, [ cakeMat, outlineMat ] );
-				// scene.add( cakeMesh );
-
-				// var wireframe = new THREE.WireframeGeometry( cakeGeo );
-				// var line = new THREE.LineSegments( wireframe );
-				// line.material.color.setHex( 0x000000 );
-				// cakeMesh.add( line );
-
-				// cherry
-
-				var cherryGeo = new THREE.SphereBufferGeometry(0.22);
-				var cherryMat = new THREE.MeshToonMaterial({
-					color: 0xff0000,
-					specular: 0xffffff,
-					shininess: 100
-				});
-
-				var cherryOutline = outlineMat.clone();
-				cherryOutline.uniforms.offset.value = 0.07;
-				cherryOutline.depthWrite = false;
-				var cherryMats = [ cherryMat, cherryOutline ];
-				cherry = this.cherry = THREE.SceneUtils.createMultiMaterialObject( cherryGeo, cherryMats );
-				cherry.children[1].renderOrder = -1;
-
-				this.cherryAirY = 3;
-				cherry.position.y = this.cherryAirY; // above cake
-				this.add( cherry );
-
-				this.cherry.tween = tweenProp( this.cherry.position, 'y', 1.1 );
-			};
-
-			Cake.prototype = Object.create( THREE.Object3D.prototype );
-			Cake.prototype.constructor = Cake;
-
-			Cake.prototype.drop = function(){
-				this.cherry.tween.start();
-			};
-
-			Cake.prototype.reset = function(){
-				this.cherry.position.y = this.cherryAirY;
-			};
-
-
-			// -----------------------------------------------------------------
-
-			var container = document.getElementById( 'container' );
-
-			var renderer = new THREE.WebGLRenderer( { antialias: true } );
-			renderer.setClearColor( 0xdcdcb5, 1 );
-			renderer.setPixelRatio( window.devicePixelRatio );
-			renderer.setSize( window.innerWidth, window.innerHeight );
-			container.appendChild( renderer.domElement );
-
-			var camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 100000 );
-			// camera.position.set( 0, 3, 5 );
-			camera.position.set( -8, 3, -4 );
-
-			var controls = new THREE.OrbitControls( camera, renderer.domElement );
-
-			var scene = new THREE.Scene();
-
-			var dLight = new THREE.DirectionalLight( 0xffffff, 1 );
-			dLight.position.set( -1, 1, 0 );
-			scene.add( dLight );
-
-			// var gh = new THREE.GridHelper( 2, 10, 0x000000, 0x808080 );
-			// scene.add( gh );
-
-			//
-
-			var colors = {
-				red: 0xbb0000,
-				green: 0x00a20b,
-				blue: 0x115bd5
-			}
-
-			var cakes = new THREE.Group();
-			scene.add( cakes );
-
-			var cake1 = new Cake( colors.red );
-			cake1.position.x = -3;
-			cakes.add( cake1 );
-
-			var cake2 = new Cake( colors.blue );
-			cakes.add( cake2 );
-
-			var cake3 = new Cake( colors.green );
-			cake3.position.x = 3;
-			cakes.add( cake3 );
-
-			function resetAll() {
-				for (var i = 0; i < cakes.children.length; i++) {
-					var cake = cakes.children[i];
-					cake.reset();
-				}
-			}
-
-			renderer.domElement.style.cursor = 'pointer';
-
-			var i = 0;
-
-			function mousedown(e){
-				e.preventDefault();
-				if (i >= cakes.children.length) {
-					i = 0;
-					TWEEN.removeAll();
-					resetAll();
-				} else {
-					var cake = cakes.children[i++];
-					cake.drop();
-				}
-			}
-
-			renderer.domElement.addEventListener('mousedown', mousedown, false);
-			renderer.domElement.addEventListener('touchstart', mousedown, false);
-
-			//
-
-			window.addEventListener( 'resize', resize, false );
-
-			function resize() {
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-				renderer.setSize( window.innerWidth, window.innerHeight );
-			}
-
-			loop();
-
-			function loop() {
-				requestAnimationFrame( loop );
-				TWEEN.update();
-				controls.update();
-				renderer.render( scene, camera );
-			}
-
-			function tweenProp( obj, prop, targetValue, delay ) {
-				var target = {};
-				target[prop] = targetValue;
-
-				var tween = new TWEEN.Tween( obj )
-				.to( target, 800 )
-					.easing( TWEEN.Easing.Elastic.Out )
-					.delay( delay || 0 );
-
-				return tween;
-			}
-
-		</script>
-
-	</body>
+        this.cherry.tween = tweenProp(this.cherry.position, 'y', 1.1);
+      };
+
+      Cake.prototype = Object.create(THREE.Object3D.prototype);
+      Cake.prototype.constructor = Cake;
+
+      Cake.prototype.drop = function () {
+        this.cherry.tween.start();
+      };
+
+      Cake.prototype.reset = function () {
+        this.cherry.position.y = this.cherryAirY;
+      };
+
+      // -----------------------------------------------------------------
+
+      var container = document.getElementById('container');
+
+      var renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setClearColor(0xdcdcb5, 1);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      container.appendChild(renderer.domElement);
+
+      var camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 100000);
+      // camera.position.set( 0, 3, 5 );
+      camera.position.set(-8, 3, -4);
+
+      var controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+      var scene = new THREE.Scene();
+
+      var dLight = new THREE.DirectionalLight(0xffffff, 1);
+      dLight.position.set(-1, 1, 0);
+      scene.add(dLight);
+
+      // var gh = new THREE.GridHelper( 2, 10, 0x000000, 0x808080 );
+      // scene.add( gh );
+
+      //
+
+      var colors = {
+        red: 0xbb0000,
+        green: 0x00a20b,
+        blue: 0x115bd5,
+      };
+
+      var cakes = new THREE.Group();
+      scene.add(cakes);
+
+      var cake1 = new Cake(colors.red);
+      cake1.position.x = -3;
+      cakes.add(cake1);
+
+      var cake2 = new Cake(colors.blue);
+      cakes.add(cake2);
+
+      var cake3 = new Cake(colors.green);
+      cake3.position.x = 3;
+      cakes.add(cake3);
+
+      function resetAll() {
+        for (var i = 0; i < cakes.children.length; i++) {
+          var cake = cakes.children[i];
+          cake.reset();
+        }
+      }
+
+      renderer.domElement.style.cursor = 'pointer';
+
+      var i = 0;
+
+      function mousedown(e) {
+        e.preventDefault();
+        if (i >= cakes.children.length) {
+          i = 0;
+          TWEEN.removeAll();
+          resetAll();
+        } else {
+          var cake = cakes.children[i++];
+          cake.drop();
+        }
+      }
+
+      renderer.domElement.addEventListener('mousedown', mousedown, false);
+      renderer.domElement.addEventListener('touchstart', mousedown, false);
+
+      //
+
+      window.addEventListener('resize', resize, false);
+
+      function resize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+
+      loop();
+
+      function loop() {
+        requestAnimationFrame(loop);
+        TWEEN.update();
+        controls.update();
+        renderer.render(scene, camera);
+      }
+
+      function tweenProp(obj, prop, targetValue, delay) {
+        var target = {};
+        target[prop] = targetValue;
+
+        var tween = new TWEEN.Tween(obj)
+          .to(target, 800)
+          .easing(TWEEN.Easing.Elastic.Out)
+          .delay(delay || 0);
+
+        return tween;
+      }
+    </script>
+  </body>
 </html>
