@@ -84,7 +84,7 @@ fresnelMat2.uniforms.color2.value.setHex(0xc520cb); // pink
 // -------------------------------
 
 var gui = new GUI();
-// gui.close();
+gui.close();
 
 var f1 = gui.addFolder('fresnel');
 f1.open();
