@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>R3F Babel Twisted Torus</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell',
+          'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        background: #bbb;
+      }
+
+      #canvas-container {
+        width: 100vw;
+        height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "react": "https://esm.sh/react@19.1.0?dev",
+          "react/": "https://esm.sh/react@19.1.0&dev/",
+          "react-dom": "https://esm.sh/react-dom@19.1.0?dev",
+          "react-dom/": "https://esm.sh/react-dom@19.1.0&dev/",
+          "@react-three/fiber": "https://esm.sh/@react-three/fiber@alpha?dev&external=react,react-dom,three",
+          "three": "https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.module.js",
+          "three/webgpu": "https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.webgpu.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/",
+          "jpalette": "https://cdn.jsdelivr.net/npm/jpalette@1.0.4/src/index.js"
+        }
+      }
+    </script>
+
+    <script type="module" src="https://esm.sh/run"></script>
+
+    <script type="text/babel">
+      // https://github.com/pmndrs/react-three-fiber/issues/3350#issuecomment-2348276683
+
+      import { createRoot } from 'react-dom/client';
+      import React, { useRef, useState, useLayoutEffect } from 'react';
+      import { Canvas, useFrame, useThree, extend } from '@react-three/fiber';
+      import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+      import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+      import * as THREE from 'three/webgpu';
+      import * as jPalette from 'jpalette';
+
+      extend({ OrbitControls, RoundedBoxGeometry });
+
+      const colors = [
+        new jPalette.Color(150, 77, 218, 255), // purple
+        new jPalette.Color(63, 123, 213, 255), // blue
+        new jPalette.Color(212, 86, 214, 255), // pink
+        new jPalette.Color(150, 77, 218, 255), // purple
+      ];
+
+      function Box({ color, ...props }) {
+        const meshRef = useRef();
+        const [hovered, setHover] = useState(false);
+
+        useFrame(() => (meshRef.current.rotation.x -= 0.01));
+
+        return (
+          <mesh
+            {...props}
+            ref={meshRef}
+            onPointerOver={(e) => {
+              // https://r3f.docs.pmnd.rs/api/events#event-propagation-(bubbling)
+              e.stopPropagation();
+              setHover(true);
+            }}
+            onPointerOut={() => setHover(false)}
+          >
+            <roundedBoxGeometry args={[0.12, 0.5, 0.5, 2, 0.025]} />
+            <meshStandardMaterial color={color} emissive={hovered ? '#ff0000' : 'black'} />
+          </mesh>
+        );
+      }
+
+      function Ring({ numBoxes = 70, multiplier = 1, ...props }) {
+        const colorPalette = new jPalette.ColorMap(numBoxes, colors);
+
+        return (
+          <group {...props}>
+            {[...Array(numBoxes)].map((item, i) => {
+              const boxParentRef = useRef();
+              const scene = useThree((state) => state.scene);
+
+              useLayoutEffect(() => {
+                boxParentRef.current.lookAt(new THREE.Vector3(props['position-x'], 0, 0));
+              }, []);
+
+              const angle = (i / numBoxes) * Math.PI * 2;
+
+              return (
+                <group ref={boxParentRef} key={i} position={[Math.cos(angle), Math.sin(angle), 0]}>
+                  <vector3 attach="up" args={[0, 0, 1]} />
+                  <Box color={colorPalette.map[i].rgb()} rotation-x={-angle * multiplier} />
+                </group>
+              );
+            })}
+          </group>
+        );
+      }
+
+      function Controls() {
+        const camera = useThree((state) => state.camera);
+        const gl = useThree((state) => state.gl);
+
+        return <orbitControls args={[camera, gl.domElement]} />;
+      }
+
+      function App() {
+        return (
+          <div id="canvas-container">
+            <Canvas
+              gl={async (props) => {
+                const renderer = new THREE.WebGPURenderer(props);
+                await renderer.init();
+                return renderer;
+              }}
+              camera={{ position: [0, 0, 3] }}
+            >
+              <color attach="background" args={['#686481']} />
+              <Controls />
+              <ambientLight args={[0x888888]} />
+              <directionalLight args={[0xffffff, 2.0]} position={[0, 1, 1]} />
+              <Ring />
+              <Ring position-x={3} numBoxes={80} multiplier={2} />
+              <Ring position-x={-3} multiplier={0.25} />
+            </Canvas>
+          </div>
+        );
+      }
+
+      createRoot(document.getElementById('root')).render(<App />);
+    </script>
+  </body>
+</html>
