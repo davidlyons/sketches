@@ -123,7 +123,7 @@
       var aLight = new THREE.AmbientLight(0x777777, 1.5);
       scene.add(aLight);
 
-      var dLight = new THREE.DirectionalLight(0xffffff, 1.2);
+      var dLight = new THREE.DirectionalLight(0xffffff, 2);
       dLight.position.set(7, 5, 9);
       scene.add(dLight);
 
@@ -406,12 +406,8 @@
 
       function loop(time) {
         requestAnimationFrame(loop);
-        // TWEEN.update();
 
         // frame += 0.05;
-
-        // shaderMaterial.uniforms.amplitude.value = Math.sin( frame * 3 ) / 2 + 3.0;
-
         // rotation.x = Math.cos( frame / 2 ) / 20;
         // rotation.z = Math.sin( frame / 2 ) / 20;
         // updateRotation();
