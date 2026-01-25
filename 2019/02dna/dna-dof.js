@@ -36,14 +36,21 @@ const target = new THREE.Vector3();
 
 // https://2pha.com/demos/threejs/shaders/2_color_fresnel.html
 
+var params = {
+  color1: '#cccccc', // edge
+  color2: '#222222', // base
+  color3: '#cccccc',
+  color4: '#444444',
+};
+
 var fresnelMat = new THREE.ShaderMaterial({
   uniforms: {
-    color1: { type: 'c', value: new THREE.Color(0xcccccc) }, // edge, light blue
-    color2: { type: 'c', value: new THREE.Color(0x222222) }, // base, dark blue
-    alpha: { type: 'f', value: 0.75 },
-    fresnelBias: { type: 'f', value: 0.1 },
-    fresnelScale: { type: 'f', value: 1.0 },
-    fresnelPower: { type: 'f', value: 1.5 },
+    color1: { value: new THREE.Color(params.color1) }, // edge
+    color2: { value: new THREE.Color(params.color2) }, // base
+    alpha: { value: 0.75 },
+    fresnelBias: { value: 0.1 },
+    fresnelScale: { value: 1.0 },
+    fresnelPower: { value: 1.5 },
   },
 
   vertexShader: /* glsl */ `
@@ -83,11 +90,9 @@ var fresnelMat = new THREE.ShaderMaterial({
 });
 
 var fresnelMat2 = fresnelMat.clone();
-// fresnelMat2.uniforms.color1.value.setHex(0xf5cafe); // light pink
-// fresnelMat2.uniforms.color2.value.setHex(0x9a13ae); // pink
 
-fresnelMat2.uniforms.color1.value.setHex(0xcccccc);
-fresnelMat2.uniforms.color2.value.setHex(0x444444);
+fresnelMat2.uniforms.color1.value.set(params.color3);
+fresnelMat2.uniforms.color2.value.set(params.color4);
 
 // -------------------------------
 
@@ -101,27 +106,20 @@ f1.add(fresnelMat.uniforms.fresnelBias, 'value', 0, 1).name('bias');
 f1.add(fresnelMat.uniforms.fresnelScale, 'value', 0, 10).name('scale');
 f1.add(fresnelMat.uniforms.fresnelPower, 'value', 0, 10).name('power');
 
-var colors = {
-  color1: '#' + fresnelMat.uniforms.color1.value.getHexString(),
-  color2: '#' + fresnelMat.uniforms.color2.value.getHexString(),
-  color3: '#' + fresnelMat2.uniforms.color1.value.getHexString(),
-  color4: '#' + fresnelMat2.uniforms.color2.value.getHexString(),
-};
-
-f1.addColor(colors, 'color1').onChange(function (val) {
-  fresnelMat.uniforms.color1.value.setStyle(val);
+f1.addColor(params, 'color1').onChange(function (val) {
+  fresnelMat.uniforms.color1.value.set(val);
 });
 
-f1.addColor(colors, 'color2').onChange(function (val) {
-  fresnelMat.uniforms.color2.value.setStyle(val);
+f1.addColor(params, 'color2').onChange(function (val) {
+  fresnelMat.uniforms.color2.value.set(val);
 });
 
-f1.addColor(colors, 'color3').onChange(function (val) {
-  fresnelMat2.uniforms.color1.value.setStyle(val);
+f1.addColor(params, 'color3').onChange(function (val) {
+  fresnelMat2.uniforms.color1.value.set(val);
 });
 
-f1.addColor(colors, 'color4').onChange(function (val) {
-  fresnelMat2.uniforms.color2.value.setStyle(val);
+f1.addColor(params, 'color4').onChange(function (val) {
+  fresnelMat2.uniforms.color2.value.set(val);
 });
 
 // -----------------------------------------------------
@@ -285,10 +283,10 @@ dna3.position.set(-10, -28, -4);
 
 var ParticleShader = {
   uniforms: {
-    color: { type: 'v3', value: new THREE.Color(0xff0000) },
-    texture: { type: 't', value: null },
-    time: { type: 'f', value: 0 },
-    size: { type: 'f', value: 50.0 },
+    color: { value: new THREE.Color(0xff0000) },
+    texture: { value: null },
+    time: { value: 0 },
+    size: { value: 50.0 },
   },
 
   vertexShader: /* glsl */ `

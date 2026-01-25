@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -228,8 +228,8 @@
 
       var MoonShader = {
         uniforms: {
-          colorA: { type: 'v3', value: scene.background },
-          colorB: { type: 'v3', value: new THREE.Color('#fff') },
+          colorA: { value: scene.background },
+          colorB: { value: new THREE.Color('#fff') },
         },
 
         vertexShader: `
@@ -291,10 +291,10 @@
 
       var StarShader = {
         uniforms: {
-          color: { type: 'v3', value: new THREE.Color(0xffffff) },
-          textureMap: { type: 't', value: null },
-          time: { type: 'f', value: 0 },
-          size: { type: 'f', value: 500.0 },
+          color: { value: new THREE.Color(0xffffff) },
+          textureMap: { value: null },
+          time: { value: 0 },
+          size: { value: 500.0 },
         },
 
         vertexShader: `

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -65,9 +65,9 @@
 
       var OutlineShader = {
         uniforms: {
-          offset: { type: 'f', value: 0.3 },
-          color: { type: 'v3', value: new THREE.Color('#000000') },
-          alpha: { type: 'f', value: 1.0 },
+          offset: { value: 0.3 },
+          color: { value: new THREE.Color('#000000') },
+          alpha: { value: 1.0 },
         },
 
         vertexShader: /* glsl */ `
@@ -349,15 +349,15 @@
 
       var ParticleShader = {
         uniforms: {
-          color: { type: 'v3', value: new THREE.Color(0x2a4a52) },
-          texture: { type: 't', value: null },
-          time: { type: 'f', value: 0 },
-          size: { type: 'f', value: 50.0 },
+          color: { value: new THREE.Color(0x2a4a52) },
+          texture: { value: null },
+          time: { value: 0 },
+          size: { value: 50.0 },
 
           // ShaderMaterial texture and fog: https://jsfiddle.net/2pha/h83py9gu/
-          fogColor: { type: 'c', value: scene.fog.color },
-          fogNear: { type: 'f', value: scene.fog.near },
-          fogFar: { type: 'f', value: scene.fog.far },
+          fogColor: { value: scene.fog.color },
+          fogNear: { value: scene.fog.near },
+          fogFar: { value: scene.fog.far },
         },
 
         vertexShader: /* glsl */ `

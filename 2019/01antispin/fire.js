@@ -34,7 +34,7 @@ scene.add(camera);
 
 var GradientShader = {
   uniforms: {
-    time: { type: 'f', value: 1.0 },
+    time: { value: 1.0 },
   },
 
   vertexShader: /* glsl */ `
@@ -71,9 +71,9 @@ var GradientShader = {
 
 var OutlineShader = {
   uniforms: {
-    offset: { type: 'f', value: 0.03 },
-    color: { type: 'v3', value: new THREE.Color('#ff2a1f') },
-    alpha: { type: 'f', value: 1.0 },
+    offset: { value: 0.03 },
+    color: { value: new THREE.Color('#ff2a1f') },
+    alpha: { value: 1.0 },
   },
 
   vertexShader: /* glsl */ `
@@ -101,12 +101,12 @@ var OutlineShader = {
 
 var fresnelMat = new THREE.ShaderMaterial({
   uniforms: {
-    color1: { type: 'c', value: new THREE.Color(0xff5800) }, // edge
-    color2: { type: 'c', value: new THREE.Color(0xffea59) }, // base
-    alpha: { type: 'f', value: 1.0 },
-    fresnelBias: { type: 'f', value: 0.1 },
-    fresnelScale: { type: 'f', value: 1.0 },
-    fresnelPower: { type: 'f', value: 1.5 },
+    color1: { value: new THREE.Color(0xff5800) }, // edge
+    color2: { value: new THREE.Color(0xffea59) }, // base
+    alpha: { value: 1.0 },
+    fresnelBias: { value: 0.1 },
+    fresnelScale: { value: 1.0 },
+    fresnelPower: { value: 1.5 },
   },
 
   vertexShader: /* glsl */ `

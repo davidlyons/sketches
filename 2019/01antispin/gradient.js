@@ -34,7 +34,7 @@ scene.add(camera);
 
 var GradientShader = {
   uniforms: {
-    time: { type: 'f', value: 1.0 },
+    time: { value: 1.0 },
   },
 
   vertexShader: /* glsl */ `
@@ -87,9 +87,9 @@ var GradientShader = {
 
 var OutlineShader = {
   uniforms: {
-    offset: { type: 'f', value: 0.025 },
-    color: { type: 'v3', value: new THREE.Color('#000000') },
-    alpha: { type: 'f', value: 0.6 },
+    offset: { value: 0.025 },
+    color: { value: new THREE.Color('#000000') },
+    alpha: { value: 0.6 },
   },
 
   vertexShader: /* glsl */ `

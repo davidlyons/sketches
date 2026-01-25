@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <!-- Global site tag (gtag.js) - Google Analytics -->
@@ -70,8 +70,8 @@
 
       var TreeShader = {
         uniforms: {
-          amplitude: { type: 'f', value: 0 },
-          diffuse: { type: 'c', value: new THREE.Color(0xff6de9) },
+          amplitude: { value: 0 },
+          diffuse: { value: new THREE.Color(0xff6de9) },
         },
 
         vertexShader: `
