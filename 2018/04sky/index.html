@@ -50,8 +50,8 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.module.js",
-          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/"
+          "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
         }
       }
     </script>
@@ -433,14 +433,16 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
       }
 
-      var clock = new THREE.Clock();
+      var timer = new THREE.Timer();
+      timer.connect(document);
 
       renderer.setAnimationLoop(loop);
 
       function loop() {
+        timer.update();
         // controls.update();
 
-        var time = clock.getElapsedTime();
+        var time = timer.getElapsed();
 
         for (var i = 0; i < clouds.length; i++) {
           clouds[i].update(time);

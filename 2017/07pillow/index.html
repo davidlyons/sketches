@@ -35,13 +35,13 @@
   <body>
     <div id="container"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/libs/ammo.wasm.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/kripken/ammo.js@79190a1f03845794b1bba1777f30037349967658/builds/ammo.wasm.js"></script>
 
     <script type="importmap">
       {
         "imports": {
-          "three": "https://cdn.jsdelivr.net/npm/three@0.177.0/build/three.module.js",
-          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.177.0/examples/jsm/"
+          "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
         }
       }
     </script>
@@ -72,7 +72,9 @@
       let camera, controls, scene, renderer;
       // let textureLoader;
 
-      var clock = new THREE.Clock();
+      var timer = new THREE.Timer();
+      timer.connect(document);
+
       var ballMaterial = new THREE.MeshPhongMaterial({ color: 0x202020 });
       var pos = new THREE.Vector3();
       var quat = new THREE.Quaternion();
@@ -454,7 +456,9 @@
       }
 
       function loop() {
-        var deltaTime = clock.getDelta();
+        timer.update();
+
+        var deltaTime = timer.getDelta();
 
         updatePhysics(deltaTime);
 
