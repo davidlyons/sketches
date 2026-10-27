@@ -3,3 +3,4 @@
 *.ma
 *.psd
 convert_obj_three.py
+.DS_Store
