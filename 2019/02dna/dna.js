@@ -3,6 +3,10 @@ import * as THREE from 'three';
 import { GUI } from 'lil-gui';
 import TWEEN from 'three/addons/libs/tween.module.js';
 
+if (new URLSearchParams(window.location.search).has('embed')) {
+  document.getElementById('home').hidden = true;
+}
+
 const container = document.getElementById('container');
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -92,7 +96,17 @@ fresnelMat2.uniforms.color2.value.set(params.color4);
 // -------------------------------
 
 var gui = new GUI();
-gui.close();
+
+// show gui on local, hide on prod
+const local = ['localhost', '192', '127'];
+const isLocal = local.some((item) => location.hostname.includes(item));
+if (!isLocal) gui.hide();
+
+window.addEventListener('keydown', function (e) {
+  if (e.key === 'h') {
+    gui._hidden ? gui.show() : gui.hide();
+  }
+});
 
 var f1 = gui.addFolder('fresnel');
 f1.open();

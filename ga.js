@@ -1,8 +1,12 @@
+const local = ['localhost', '192', '127'];
+const isLocal = local.some((item) => window.location.hostname.includes(item));
 
-if ( document.location.hostname != 'localhost' ) {
-	window.dataLayer = window.dataLayer || [];
-	function gtag(){dataLayer.push(arguments);}
-	gtag('js', new Date());
+if (!isLocal) {
+  window.dataLayer = window.dataLayer || [];
+  function gtag() {
+    dataLayer.push(arguments);
+  }
+  gtag('js', new Date());
 
-	gtag('config', 'G-WTY198QNED');
+  gtag('config', 'G-WTY198QNED');
 }
