@@ -67,8 +67,8 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
-          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/"
+          "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
         }
       }
     </script>
@@ -91,23 +91,23 @@
           alpha: { value: 1.0 },
         },
 
-        vertexShader: /* glsl */ `
-					uniform float offset;
+        vertexShader: `
+          uniform float offset;
 
-					void main() {
-					  vec4 pos = modelViewMatrix * vec4( position + normal * offset, 1.0 );
-					  gl_Position = projectionMatrix * pos;
-					}
-				`,
+          void main() {
+            vec4 pos = modelViewMatrix * vec4( position + normal * offset, 1.0 );
+            gl_Position = projectionMatrix * pos;
+          }
+        `,
 
-        fragmentShader: /* glsl */ `
-					uniform vec3 color;
-					uniform float alpha;
+        fragmentShader: `
+          uniform vec3 color;
+          uniform float alpha;
 
-					void main() {
-					  gl_FragColor = vec4( color, alpha );
-					}
-				`,
+          void main() {
+            gl_FragColor = vec4( color, alpha );
+          }
+        `,
       };
 
       THREE.ColorManagement.enabled = false;
@@ -142,20 +142,29 @@
       dLight1.position.set(0.7, 1, 1);
       scene.add(dLight1);
 
-      // var dlh1 = new THREE.DirectionalLightHelper( dLight1, 0.5 );
-      // scene.add( dlh1 );
+      // var dlh1 = new THREE.DirectionalLightHelper(dLight1, 0.5);
+      // scene.add(dlh1);
 
-      // var gh = new THREE.GridHelper( 2, 10, 0x000000, 0x808080 );
-      // scene.add( gh );
+      // var gh = new THREE.GridHelper(2, 10, 0x000000, 0x808080);
+      // scene.add(gh);
 
       // -------------------------------------------
 
       var rocketGroup = new THREE.Group();
       scene.add(rocketGroup);
 
+      var rocketGroup2 = new THREE.Group();
+      rocketGroup2.position.y = 2.7;
+      rocketGroup.add(rocketGroup2);
+
       var rocket = new THREE.Group();
-      rocket.position.y = -1.5; // vertically center
-      rocketGroup.add(rocket);
+      rocket.position.y = -4.2; // vertically center
+      rocket.rotation.y = Math.PI;
+      rocketGroup2.add(rocket);
+
+      // rocketGroup.add(new THREE.AxesHelper(3));
+      // rocketGroup2.add(new THREE.AxesHelper(3));
+      // rocket.add(new THREE.AxesHelper(2));
 
       // -------------------------------------------
 
@@ -177,7 +186,6 @@
 
       var rocketMat = new THREE.MeshToonMaterial({
         color: 0x999999,
-        // shininess: 1,
       });
 
       var rocketOutlineMat = new THREE.ShaderMaterial({
@@ -191,10 +199,10 @@
       rocketObj.scale.setScalar(0.1);
       rocket.add(rocketObj);
 
-      // var wireframe = new THREE.WireframeGeometry( rocketGeo );
-      // var line = new THREE.LineSegments( wireframe );
-      // line.material.color.setHex( 0x000000 );
-      // rocketObj.add( line );
+      // var wireframe = new THREE.WireframeGeometry(rocketGeo);
+      // var line = new THREE.LineSegments(wireframe);
+      // line.material.color.setHex(0x000000);
+      // rocketObj.add(line);
 
       // -------------------------------------------
 
@@ -229,7 +237,6 @@
 
       var tubeMat = new THREE.MeshToonMaterial({
         color: 0x930000,
-        // shininess: 1,
       });
 
       var tubeOutlineMat = rocketOutlineMat.clone();
@@ -239,10 +246,10 @@
       tube.scale.setScalar(0.1);
       rocket.add(tube);
 
-      // var wireframe = new THREE.WireframeGeometry( tubeGeo );
-      // var line = new THREE.LineSegments( wireframe );
-      // line.material.color.setHex( 0x000000 );
-      // tube.add( line );
+      // var wireframe = new THREE.WireframeGeometry(tubeGeo);
+      // var line = new THREE.LineSegments(wireframe);
+      // line.material.color.setHex(0x000000);
+      // tube.add(line);
 
       // -------------------------------------------
 
@@ -275,7 +282,6 @@
 
       var wingMat = new THREE.MeshToonMaterial({
         color: 0x930000,
-        // shininess: 1,
       });
 
       wingMat.needsUpdate = true;
@@ -289,10 +295,10 @@
       wing.position.set(0.6, 0.9, 0);
       wingGroup.add(wing);
 
-      // var wireframe = new THREE.WireframeGeometry( wingGeo );
-      // var line = new THREE.LineSegments( wireframe );
-      // line.material.color.setHex( 0x000000 );
-      // wing.add( line );
+      // var wireframe = new THREE.WireframeGeometry(wingGeo);
+      // var line = new THREE.LineSegments(wireframe);
+      // line.material.color.setHex(0x000000);
+      // wing.add(line);
 
       var wing2 = wingGroup.clone();
       wing2.rotation.y = Math.PI;
@@ -325,24 +331,26 @@
           color1: { value: new THREE.Color('yellow') },
           color2: { value: new THREE.Color(0xff7b00) }, // orange
         },
+
         vertexShader: `
-					varying vec2 vUv;
+          varying vec2 vUv;
 
-					void main() {
-						vUv = uv;
-						gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
-					}
-				`,
+          void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+          }
+        `,
+
         fragmentShader: `
-					uniform vec3 color1;
-					uniform vec3 color2;
+          uniform vec3 color1;
+          uniform vec3 color2;
 
-					varying vec2 vUv;
+          varying vec2 vUv;
 
-					void main() {
-						gl_FragColor = vec4(mix(color1, color2, vUv.y), 1.0);
-					}
-				`,
+          void main() {
+            gl_FragColor = vec4(mix(color1, color2, vUv.y), 1.0);
+          }
+        `,
       });
 
       var fire = new THREE.Mesh(fireGeo, fireMat);
@@ -381,54 +389,54 @@
           fogFar: { value: scene.fog.far },
         },
 
-        vertexShader: /* glsl */ `
-					uniform float time;
-					uniform float size;
-					attribute float alphaOffset;
-					varying float vAlpha;
-					uniform vec4 origin;
+        vertexShader: `
+          uniform float time;
+          uniform float size;
+          attribute float alphaOffset;
+          varying float vAlpha;
+          uniform vec4 origin;
 
-					void main() {
+          void main() {
 
-						// vAlpha = 0.5 * ( 1.0 + sin( alphaOffset + time ) );
-						vAlpha = 0.9;
+            // vAlpha = 0.5 * ( 1.0 + sin( alphaOffset + time ) );
+            vAlpha = 0.9;
 
-						vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
-						float cameraDist = distance( mvPosition, origin );
-						gl_PointSize = size / cameraDist;
-						gl_Position = projectionMatrix * mvPosition;
+            vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+            float cameraDist = distance( mvPosition, origin );
+            gl_PointSize = size / cameraDist;
+            gl_Position = projectionMatrix * mvPosition;
 
-					}
-				`,
+          }
+        `,
 
-        fragmentShader: /* glsl */ `
-					uniform float time;
-					uniform vec3 color;
+        fragmentShader: `
+          uniform float time;
+          uniform vec3 color;
 
-					uniform vec3 fogColor;
-					uniform float fogNear;
-					uniform float fogFar;
+          uniform vec3 fogColor;
+          uniform float fogNear;
+          uniform float fogFar;
 
-					varying float vAlpha;
+          varying float vAlpha;
 
-					void main() {
-						vec2 center = gl_PointCoord - 0.5;
-						float dist = length(center);
-						float alpha = smoothstep(0.5, 0.1, dist) * vAlpha;
-						gl_FragColor = vec4( color, alpha );
+          void main() {
+            vec2 center = gl_PointCoord - 0.5;
+            float dist = length(center);
+            float alpha = smoothstep(0.5, 0.1, dist) * vAlpha;
+            gl_FragColor = vec4( color, alpha );
 
-						#ifdef USE_FOG
-							#ifdef USE_LOGDEPTHBUF_EXT
-								float depth = gl_FragDepthEXT / gl_FragCoord.w;
-							#else
-								float depth = gl_FragCoord.z / gl_FragCoord.w;
-							#endif
+            #ifdef USE_FOG
+              #ifdef USE_LOGDEPTHBUF_EXT
+                float depth = gl_FragDepthEXT / gl_FragCoord.w;
+              #else
+                float depth = gl_FragCoord.z / gl_FragCoord.w;
+              #endif
 
-							float fogFactor = smoothstep( fogNear, fogFar, depth );
-							gl_FragColor.rgb = mix( gl_FragColor.rgb, fogColor, fogFactor );
-						#endif
-					}
-				`,
+              float fogFactor = smoothstep( fogNear, fogFar, depth );
+              gl_FragColor.rgb = mix( gl_FragColor.rgb, fogColor, fogFactor );
+            #endif
+          }
+        `,
       };
 
       class Particles extends THREE.Group {
@@ -482,8 +490,8 @@
           var box = new THREE.Box3();
           box.setFromCenterAndSize(points.position, range);
 
-          // var boxHelper = new THREE.Box3Helper( box );
-          // this.add( boxHelper );
+          // var boxHelper = new THREE.Box3Helper(box);
+          // this.add(boxHelper);
         }
 
         update() {
@@ -529,8 +537,8 @@
       //
 
       var plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
-      // var helper = new THREE.PlaneHelper( plane, 5, 0xffff00 );
-      // scene.add( helper );
+      // var helper = new THREE.PlaneHelper(plane, 5, 0xffff00);
+      // scene.add(helper);
 
       var rocketTarget = new THREE.Vector3();
 
@@ -544,11 +552,11 @@
       var mouse = new THREE.Vector2();
 
       // var targetSphere = new THREE.Mesh(
-      // 	new THREE.SphereBufferGeometry( 0.2 ),
-      // 	new THREE.MeshPhongMaterial({ color: 0x00ff00 })
+      //   new THREE.SphereGeometry(0.2),
+      //   new THREE.MeshPhongMaterial({ color: 0x00ff00 })
       // );
 
-      // scene.add( targetSphere );
+      // scene.add(targetSphere);
 
       function mousemove(event) {
         var e = (event.touches && event.touches[0]) || event;
@@ -560,35 +568,43 @@
 
         raycaster.setFromCamera(mouse, camera);
         raycaster.ray.intersectPlane(plane, rocketTarget);
-        // targetSphere.position.copy( rocketTarget );
+        // targetSphere.position.copy(rocketTarget);
       }
+
+      let isPlaying = false;
+      let dir = 1;
 
       function mousedown(event) {
         event.preventDefault();
 
-        TWEEN.removeAll();
+        if (!isPlaying) {
+          TWEEN.removeAll();
+          isPlaying = true;
+          dir *= -1;
 
-        // rotation
-        var dir = mouse.x < 0 ? -1 : 1;
-        var tween = new TWEEN.Tween(rocket.rotation)
-          .to({ y: dir * Math.PI }, 1000)
-          .easing(TWEEN.Easing.Quadratic.InOut)
-          .start();
+          // rotation
+          var tween = new TWEEN.Tween(rocket.rotation)
+            .to({ y: dir * Math.PI }, 1000)
+            .easing(TWEEN.Easing.Quadratic.InOut)
+            .onComplete(() => {
+              isPlaying = false;
+            })
+            .start();
 
-        // scale
-        var tween = new TWEEN.Tween(rocketGroup.scale)
-          .to({ x: 0.9, y: 1.2, z: 0.9 }, 400)
-          .easing(TWEEN.Easing.Cubic.InOut)
-          .start();
+          // scale
+          var tween = new TWEEN.Tween(rocketGroup2.scale)
+            .to({ x: 0.9, y: 1.2, z: 0.9 }, 600)
+            .easing(TWEEN.Easing.Cubic.InOut)
+            .start();
+        }
 
         stars.speedTarget = 0.3;
-
         renderer.domElement.style.cursor = 'none';
       }
 
       function mouseup(e) {
-        var tween = new TWEEN.Tween(rocketGroup.scale)
-          .to({ x: 1, y: 1, z: 1 }, 400)
+        var tween = new TWEEN.Tween(rocketGroup2.scale)
+          .to({ x: 1, y: 1, z: 1 }, 600)
           .easing(TWEEN.Easing.Cubic.InOut)
           .start();
 
@@ -621,10 +637,9 @@
       var time = 0;
       var angle = THREE.MathUtils.degToRad(3);
 
-      loop();
+      renderer.setAnimationLoop(loop);
 
       function loop() {
-        requestAnimationFrame(loop);
         timer.update();
         TWEEN.update();
         controls.update();

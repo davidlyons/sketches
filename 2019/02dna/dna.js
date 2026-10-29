@@ -53,7 +53,7 @@ var fresnelMat = new THREE.ShaderMaterial({
     fresnelPower: { value: 1.3 },
   },
 
-  vertexShader: /* glsl */ `
+  vertexShader: `
     uniform float fresnelBias;
     uniform float fresnelScale;
     uniform float fresnelPower;
@@ -74,7 +74,7 @@ var fresnelMat = new THREE.ShaderMaterial({
     }
   `,
 
-  fragmentShader: /* glsl */ `
+  fragmentShader: `
     uniform vec3 color1;
     uniform vec3 color2;
     uniform float alpha;
@@ -298,7 +298,7 @@ var ParticleShader = {
     size: { value: 50.0 },
   },
 
-  vertexShader: /* glsl */ `
+  vertexShader: `
     uniform float time;
     uniform float size;
     attribute float alphaOffset;
@@ -318,7 +318,7 @@ var ParticleShader = {
     }
   `,
 
-  fragmentShader: /* glsl */ `
+  fragmentShader: `
     uniform float time;
     uniform vec3 color;
 
